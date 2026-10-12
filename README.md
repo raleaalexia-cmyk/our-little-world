@@ -1,59 +1,61 @@
 # Our Little World
 
-A responsive couple's bucket list and shared photo album with a pink **her** theme and blue **him** theme on a black background.
+A mobile-friendly couple's bucket list and shared cloud photo album. Alexia gets pink accents, Dyan gets blue, on a black background.
 
-## Features
-- Secure Supabase email/password authentication — no browser-stored passwords or preview login.
-- Exactly two app membership slots: one **her** profile and one **him** profile.
-- Private first-time setup code, checked by a database function; each profile can be claimed only once.
-- After both slots are claimed, the app hides account creation. Other Supabase auth accounts cannot access app content unless they have one of the two membership slots.
-- One bucket list shared by both registered accounts, with categories, priorities, search, progress and completed items moved to the bottom.
-- Shared private cloud photo album with folders, upload, download and delete.
-- Live refresh of the bucket list and photo/folder changes across open devices through Supabase Realtime.
-- Mobile-responsive design.
-- Password reset email flow.
+## The login is intentionally simple
+- Choose **Alexia** or **Dyan**.
+- Enter that profile's password.
+- There is no **Create account** button, no name field, and no email field on the public login screen.
+- The website maps each profile to an existing Supabase Auth email configured in `config.js`. It checks the account's database membership before opening the private app.
+- The database allows only two membership roles: `her` and `him`. Any other Supabase Auth user is denied access to shared data.
 
-## Required setup before login can work
+The public source does not contain passwords. Do not add passwords to `config.js`, GitHub, or any frontend code.
+
+## Required private setup
 
 ### 1. Create a Supabase project
-Create a project at https://supabase.com/ and wait for it to finish provisioning.
+Create a project at https://supabase.com/ and wait for provisioning to finish.
 
-### 2. Configure the one-time setup code in the SQL
-1. Open `supabase-schema.sql` in this repository and copy its contents.
-2. In the **Supabase SQL Editor only**, replace the placeholder inside the single-quoted value on the `insert into public.couple_settings` line with a strong, unique private code (at least 24 random characters is recommended). Leave the explanatory comment unchanged.
-3. Run the SQL in Supabase. Do **not** save or commit your chosen code in this public GitHub repository.
-4. Keep the code private. Enter it in the website only while registering the her and him accounts. The database stores a bcrypt hash, not the plain code.
+### 2. Privately create the two login accounts
+In Supabase, open **Authentication → Users → Add user**:
+1. Create Alexia's user using her real email address and a strong private password. Mark/confirm the email as confirmed if you want password login to work immediately.
+2. Create Dyan's user using his real email address and a different strong private password. Confirm the email too.
+3. Do not use the public website to create accounts; it intentionally has no sign-up function.
 
-The SQL script sets up the two membership slots, security policies, shared bucket-list database, private photo metadata, a private Storage bucket, and Supabase Realtime publication for live updates. If you already ran an older version of the starter SQL, run this updated script after replacing the setup-code placeholder.
+The passwords previously typed in a chat should be treated as exposed. Set fresh passwords privately in Supabase, and never enter them into GitHub or this file.
 
-### 3. Connect the front end
-1. In Supabase, open Project Settings → API.
-2. Copy the Project URL and the publishable/anon public key.
-3. Put them in `config.js` as `supabaseUrl` and `supabaseAnonKey`.
-4. Never put a `service_role` key in `config.js` or any browser file.
+### 3. Assign the only two app profiles
+1. Open `supabase-schema.sql` in this repository and copy its full contents.
+2. In the **Supabase SQL Editor only**, replace `ALEXIA_EMAIL_REPLACE_THIS` and `DYAN_EMAIL_REPLACE_THIS` in the two membership insert statements with the exact email addresses used for the two Supabase Auth users.
+3. Run the SQL script. It creates row-level security policies, the two approved membership roles, the shared bucket list, private photo storage and live-sync publication. Do not commit actual emails or credentials into the SQL file in this public repository.
+4. If you previously tested the old sign-up version and the SQL reports that a profile is already assigned to another user, inspect `public.couple_members` in the SQL Editor and remove only the obsolete test membership before running the two insert statements again. Do not delete either Auth user.
 
-### 4. Configure email confirmation and redirects
-In Supabase Authentication settings:
-- Add `https://raleaalexia-cmyk.github.io/our-little-world/` to the allowed redirect URLs.
-- Set the Site URL to the same deployed website address.
-- Email confirmation may stay enabled. If enabled, the account holder must confirm the email, then log in again and enter the private couple setup code once to claim the chosen profile.
+### 4. Connect the website to Supabase
+In Supabase **Project Settings → API**, copy the Project URL and the publishable/anon public key. Edit `config.js` in GitHub and replace:
+- `YOUR_SUPABASE_PROJECT_URL` with the Project URL
+- `YOUR_SUPABASE_PUBLISHABLE_OR_ANON_KEY` with the publishable/anon key
+- `ALEXIA_AUTH_EMAIL` with Alexia's Auth email
+- `DYAN_AUTH_EMAIL` with Dyan's Auth email
 
-### 5. Create your two accounts
-1. Open the website and select **For her**. Choose **Create an account**, enter her name, email, a strong password, and the private setup code, then submit.
-2. Confirm the email if asked. If confirmation is enabled, log in after confirmation and enter the setup code to finish claiming the her profile.
-3. Log out, select **For him**, and repeat using his own email and password.
-4. Once both profiles are claimed, account creation is closed in the website. Sign in thereafter using those two registered accounts.
+Save/commit `config.js`; GitHub Pages automatically rebuilds after a commit. The email mappings are visible in the public frontend, so use email addresses you are comfortable being public. Never add either password or a `service_role` key to this file.
 
-Choose different strong passwords for each person. Do not share either person's password.
+### 5. Open and log in
+Visit https://raleaalexia-cmyk.github.io/our-little-world/ . Pick Alexia or Dyan and enter the password privately set for that account. Each account must have the matching membership entry from step 3.
 
-## Privacy and limitations
-- The GitHub repository is public; never commit passwords, the actual setup code, or a service-role key. The SQL file deliberately contains only a placeholder. Replace it in the Supabase SQL Editor before running the script.
-- The browser anon/publishable key is intended to be public, but database and Storage safety depends on the supplied row-level security policies.
-- The setup code is only for claiming the two initial profile slots; it is not either person's login password.
-- Because GitHub Pages is a static host, Supabase performs authentication and enforces access to shared cloud data.
-- Only members of the two registered profile slots can read or write the shared bucket list and private photo album.
+## Features
+- Shared bucket list with categories, priorities, search, progress, and completed items moved to the bottom.
+- Private cloud photo album with custom folders, uploads, downloads, and deletion.
+- Realtime updates across devices.
+- Responsive phone, tablet, and desktop layout.
+- Pink Alexia theme and blue Dyan theme.
+- Password reset is intentionally not shown on the public screen; manage/reset passwords in Supabase Authentication.
+
+## Security
+- The GitHub repository is public. Do not commit passwords, actual credentials, real email addresses, or service-role keys.
+- Use only the Supabase publishable/anon key in browser configuration, with the supplied row-level-security policies enabled.
+- Only users listed in `public.couple_members` can access the shared bucket list and cloud photo album.
 
 ## Publish
 Repository: https://github.com/raleaalexia-cmyk/our-little-world
 
-In GitHub, open Settings → Pages → Deploy from a branch, choose `main` and `/(root)`, then Save. Once configured, GitHub Pages republishes after each commit.
+In GitHub, open **Settings → Pages → Deploy from a branch**, choose `main` and `/(root)`, then Save.
