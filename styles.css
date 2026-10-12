@@ -55,3 +55,5 @@ body.theme-her .profile-pick.active{background:linear-gradient(145deg,#25182e,#1
 body.theme-him .check-button{border-color:#6988ac}
 body.theme-him .completed-divider{color:#91c4ff}
 body.theme-him .orbit-b{border-color:#4274a6}
+
+.config-warning a{display:inline-block;margin-top:5px;color:inherit;font-weight:700;text-decoration:underline;text-underline-offset:3px}
