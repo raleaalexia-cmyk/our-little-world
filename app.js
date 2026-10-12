@@ -69,6 +69,9 @@
         authMode = "login";
         $$("[data-auth-mode]").forEach(x => x.classList.toggle("active", x.dataset.authMode === authMode));
         $("#setup-code-label").classList.add("hidden");
+        $("#auth-name").closest("label").classList.add("hidden");
+        $("#auth-name").required = false;
+        $("#forgot-password").classList.remove("hidden");
         $("#auth-submit").innerHTML = 'Log in <span>↗</span>';
         setAuthMessage("Both accounts already exist. New account creation is closed.", true);
       }
