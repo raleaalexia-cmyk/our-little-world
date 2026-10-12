@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#090b12">
+  <title>Our Little World</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:wght@500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="config.js"></script>
+</head>
+<body>
+  <div class="ambient ambient-one"></div><div class="ambient ambient-two"></div>
+  <main id="auth-screen" class="auth-wrap">
+    <section class="auth-card">
+      <div class="brand-mark">♡</div>
+      <p class="eyebrow">A LITTLE SPACE FOR TWO</p>
+      <h1>Our Little<br><em>World.</em></h1>
+      <p class="muted auth-copy">A little home for your plans, memories, and next adventures.</p>
+      <div class="profile-picks" id="profile-picks">
+        <button type="button" class="profile-pick active" data-profile="you"><span class="profile-symbol">♡</span><strong>For me</strong><small>Your own login</small></button>
+        <button type="button" class="profile-pick" data-profile="him"><span class="profile-symbol blue">✦</span><strong>For him</strong><small>His own login</small></button>
+      </div>
+      <div class="auth-tabs">
+        <button class="tab active" data-auth-mode="login">Log in</button>
+        <button class="tab" data-auth-mode="signup">First-time setup</button>
+      </div>
+      <form id="auth-form">
+        <label>Your name<input id="auth-name" type="text" autocomplete="nickname" maxlength="40" placeholder="What should we call you?" required></label>
+        <label>Email address<input id="auth-email" type="email" autocomplete="email" placeholder="you@example.com" required></label>
+        <label>Password<input id="auth-password" type="password" autocomplete="current-password" minlength="8" placeholder="At least 8 characters" required></label>
+        <button class="btn btn-primary full" id="auth-submit" type="submit">Come on in <span>↗</span></button>
+      </form>
+      <p id="auth-message" class="form-message" aria-live="polite"></p>
+      <p class="tiny-note">Choose your profile, then use your own email and password.</p>
+    </section>
+    <p class="auth-foot">MADE FOR YOUR NEXT CHAPTER <span>✳</span></p>
+  </main>
+  <main id="app-screen" class="app-shell hidden">
+    <header class="topbar">
+      <a class="wordmark" href="#"><span class="mini-heart">♡</span> our little world</a>
+      <div class="top-actions"><span class="sync-status" id="sync-status">● Connected</span><button class="avatar" id="account-button" title="Account settings">♡</button></div>
+    </header>
+    <section class="hero">
+      <div class="hero-copy"><p class="eyebrow">YOUR TWO-PERSON UNIVERSE</p><h1>Life is better<br><em>when it's us.</em></h1><p class="hero-sub">Little plans, big dreams, and all the in-between.</p><div class="hero-meta"><span class="date-dot"></span><span id="today-label">A new day, another memory to make</span><span class="greeting-divider">·</span><span id="user-greeting">Your little world</span></div></div>
+      <div class="hero-art" aria-hidden="true"><div class="orbit orbit-a"></div><div class="orbit orbit-b"></div><div class="sun-disc">♡</div><span class="spark spark-a">✳</span><span class="spark spark-b">✦</span><span class="spark spark-c">·</span><div class="art-caption">you + me<br>somewhere, someday</div></div>
+    </section>
+    <section class="stats-grid">
+      <article class="stat-card"><span class="stat-icon peach">✧</span><span class="stat-label">ON OUR LIST</span><strong id="remaining-count">0</strong><span class="stat-foot">dreams waiting for us</span></article>
+      <article class="stat-card"><span class="stat-icon green">✓</span><span class="stat-label">MEMORIES MADE</span><strong id="completed-count">0</strong><span class="stat-foot">things we've done together</span></article>
+      <article class="stat-card progress-card"><div class="progress-heading"><span class="stat-label">OUR LITTLE PROGRESS</span><strong id="progress-percent">0%</strong></div><div class="progress-track"><div id="progress-bar" class="progress-fill"></div></div><span class="stat-foot">every adventure counts</span></article>
+    </section>
+    <section class="content-grid">
+      <div class="list-column">
+        <div class="section-heading"><div><p class="eyebrow">THE GOOD STUFF</p><h2>Our bucket list<span class="heading-heart">♡</span></h2></div><button class="btn btn-primary add-top" id="open-add">＋ Add a dream</button></div>
+        <div class="toolbar"><div class="search-wrap"><span>⌕</span><input id="search-input" type="search" placeholder="Find a little dream..."></div><div class="filter-tabs"><button class="filter active" data-filter="all">All</button><button class="filter" data-filter="active">To do</button><button class="filter" data-filter="completed">Done ♡</button></div></div>
+        <div class="category-row" id="category-filters"><button class="chip active" data-category="all">Everything</button><button class="chip" data-category="date">♡ Date ideas</button><button class="chip" data-category="travel">✈ Places</button><button class="chip" data-category="food">☕ Food</button><button class="chip" data-category="adventure">✳ Adventures</button><button class="chip" data-category="little">☁ Little things</button></div>
+        <div id="bucket-list" class="bucket-list"></div>
+        <div id="empty-state" class="empty-state hidden"><div class="empty-icon">♡</div><h3>A blank page, full of possibility.</h3><p>Add your first dream and start making plans together.</p><button class="btn btn-primary" id="empty-add">＋ Add your first dream</button></div>
+        <div class="completed-note" id="completed-note"><span>✦</span> Done things stay at the bottom — little reminders of your life together.</div>
+      </div>
+      <aside class="side-column">
+        <section class="side-card date-card"><div class="side-card-top"><span class="side-kicker">A LITTLE REMINDER</span><span class="tiny-flower">✳</span></div><h3>One day, we'll<br><em>look back at this.</em></h3><p>Every big adventure starts with a tiny plan. Keep dreaming together.</p><div class="scribble-heart">♡</div></section>
+        <section class="side-card notes-card"><div class="side-title"><div><span class="side-kicker">JUST BETWEEN US</span><h3>Our little note</h3></div><span class="note-icon">✎</span></div><textarea id="couple-note" rows="4" placeholder="A reminder, a dream, a tiny love note..."></textarea><div class="note-footer"><span id="note-status">Only your shared space.</span><button class="text-button" id="save-note">Save note ↗</button></div></section>
+        <section class="side-card prompt-card"><span class="side-kicker">NEED AN IDEA?</span><h3>Today's tiny prompt</h3><p id="prompt-text">Make a playlist for a drive with nowhere in particular to go.</p><button id="new-prompt" class="text-button">Give us another ↻</button></section>
+        <button id="signout-button" class="signout">Log out <span>↗</span></button>
+      </aside>
+    </section>
+    <footer class="footer">A SMALL CORNER OF THE INTERNET, JUST FOR YOU TWO <span>♡</span></footer>
+  </main>
+  <dialog id="add-dialog" class="modal"><form id="add-form" method="dialog"><div class="modal-head"><div><p class="eyebrow">A NEW LITTLE ADVENTURE</p><h2>Add to our list</h2></div><button type="button" class="close-button" id="close-add" aria-label="Close">×</button></div><label>What's the dream? <input id="item-title" maxlength="120" placeholder="e.g. Watch the sunrise together" required></label><label>A little more about it <textarea id="item-description" rows="2" maxlength="400" placeholder="Where, when, or why it matters (optional)"></textarea></label><div class="form-row"><label>Category<select id="item-category"><option value="date">Date idea</option><option value="travel">Place to go</option><option value="food">Food & drink</option><option value="adventure">Adventure</option><option value="little">Little thing</option></select></label><label>Priority<select id="item-priority"><option value="someday">Someday</option><option value="soon">Soon-ish</option><option value="must">Must do ♡</option></select></label></div><label>Dream date (optional)<input id="item-date" type="date"></label><button class="btn btn-primary full" type="submit">Add to our world <span>♡</span></button><p id="add-error" class="form-message"></p></form></dialog>
+  <dialog id="account-dialog" class="modal small-modal"><div class="modal-head"><div><p class="eyebrow">YOUR SPACE</p><h2>Account</h2></div><button type="button" class="close-button" id="close-account">×</button></div><p class="muted" id="account-email"></p><p class="privacy-copy">For real private accounts and a list shared across devices, connect Supabase and configure the database policies before using this for personal information.</p><button class="btn btn-outline full" id="account-signout">Log out</button></dialog>
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+  <script src="app.js"></script>
+</body>
+</html>
