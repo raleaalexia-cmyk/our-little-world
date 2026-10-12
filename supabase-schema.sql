@@ -46,9 +46,9 @@ create or replace function public.is_couple_user(p_user_id uuid)
 returns boolean
 language sql stable security definer
 set search_path = public
-as $
+as $$
   select exists (select 1 from public.couple_members where user_id = p_user_id);
-$;
+$$;
 revoke all on function public.is_couple_user(uuid) from public, anon;
 grant execute on function public.is_couple_user(uuid) to authenticated;
 
@@ -150,7 +150,7 @@ for delete to authenticated using (bucket_id = 'couple-photos' and public.is_cou
 
 
 -- Enable database-change broadcasts so the other device refreshes without reloading.
-do $
+do $$
 begin
   if exists (select 1 from pg_publication where pubname = 'supabase_realtime') then
     if not exists (select 1 from pg_publication_tables where pubname = 'supabase_realtime' and schemaname = 'public' and tablename = 'bucket_items') then
@@ -163,6 +163,6 @@ begin
       alter publication supabase_realtime add table public.couple_photo_folders;
     end if;
   end if;
-end $;
+end $$;
 
 -- Old note table, if present, is intentionally unused by this version of the website.
