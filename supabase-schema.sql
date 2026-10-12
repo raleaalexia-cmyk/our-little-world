@@ -1,6 +1,7 @@
 -- Our Little World: secure two-account setup.
--- IMPORTANT: Before running, replace REPLACE_WITH_A_PRIVATE_CODE_YOU_CHOOSE with a private code of at least 16 characters.
--- Enter that same code only while creating the two accounts. Do not publish the chosen code.
+-- IMPORTANT: In the Supabase SQL Editor only, replace the placeholder inside the single-quoted INSERT value below with a private code of at least 24 characters.
+-- Do not replace the explanatory comment and do not commit the chosen code to this public GitHub repository.
+-- Enter that same code only while creating the two accounts.
 
 create extension if not exists pgcrypto with schema extensions;
 
