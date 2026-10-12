@@ -17,7 +17,7 @@
     "Write down three things you want to do together this year.",
     "Go for a walk and take turns choosing every next turn."
   ];
-  let authMode = "login", selectedProfile = "her", user = null, profileName = "", profileRole = null;
+  let authMode = "login", selectedProfile = "her", user = null, profileName = "", profileRole = null, needsClaim = false;
   let items = [], filter = "all", categoryFilter = "all", query = "";
   let photoFolder = "Us", photoFolders = [...defaultFolders], photos = [], signedPhotoUrls = {};
   // Remove credentials saved by the old browser-only preview.
@@ -105,6 +105,7 @@
     profileName = user.user_metadata?.display_name || "";
     const existingRole = await checkMembership(user);
     if (existingRole) {
+      needsClaim = false;
       profileRole = existingRole;
       selectedProfile = existingRole;
       updateRoleTheme();
@@ -115,12 +116,14 @@
     const pendingRole = user.user_metadata?.couple_profile;
     const role = (pendingRole === "her" || pendingRole === "him") ? pendingRole : selectedProfile;
     if (!setupCode || setupCode.length < 8) {
+      needsClaim = true;
       $("#setup-code-label").classList.remove("hidden");
       selectedProfile = role;
       updateRoleTheme();
       throw new Error("Your account still needs to finish first-time setup. Enter the private couple setup code and press Log in again.");
     }
     profileRole = await claimAccount(setupCode,role);
+    needsClaim = false;
     selectedProfile = profileRole;
     updateRoleTheme();
     await refreshSignupAvailability();
@@ -319,7 +322,7 @@
     $("#auth-submit").innerHTML=signup?'Create account <span>♡</span>':'Log in <span>↗</span>';
     $("#auth-password").autocomplete=signup?"new-password":"current-password";
     $("#auth-name").closest("label").classList.toggle("hidden",!signup);
-    $("#setup-code-label").classList.toggle("hidden",!signup);
+    $("#setup-code-label").classList.toggle("hidden",!signup && !needsClaim);
     $("#forgot-password").classList.toggle("hidden",signup);
     setAuthMessage("");
     await refreshSignupAvailability();
@@ -449,6 +452,7 @@
         if(profileRole) {
           selectedProfile=profileRole; await showApp();
         } else {
+          needsClaim = true;
           selectedProfile=(user.user_metadata?.couple_profile==="him"?"him":"her");
           updateRoleTheme();
           $("#setup-code-label").classList.remove("hidden");
@@ -459,7 +463,7 @@
     } catch(err) {console.error(err);showAuth();setAuthMessage("Unable to check login status. Verify the Supabase setup and database SQL.",true);}
     supabase.auth.onAuthStateChange(async(event,session)=>{
       if(event==="SIGNED_OUT"){user=null;profileRole=null;showAuth();}
-      if(event==="PASSWORD_RECOVERY"){toast("Use the password recovery flow from your email to reset your password.");}
+      if(event==="PASSWORD_RECOVERY"){$("#password-dialog").showModal();}
     });
   }
   initialize();
