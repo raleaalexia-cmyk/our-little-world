@@ -23,8 +23,8 @@ alter table public.couple_members enable row level security;
 drop policy if exists "Members can view their own membership" on public.couple_members;
 create policy "Members can view their own membership" on public.couple_members
 for select to authenticated using (user_id = (select auth.uid()));
-revoke all on public.couple_settings from anon, authenticated;
-revoke all on public.couple_members from anon, authenticated;
+revoke all on public.couple_settings from public, anon, authenticated;
+revoke all on public.couple_members from public, anon, authenticated;
 grant select on public.couple_members to authenticated;
 
 -- Security-definer helpers avoid recursive row-level security checks.
@@ -86,7 +86,7 @@ begin
     return v_existing;
   end if;
 
-  if p_profile not in ('her','him') then
+  if p_profile is null or p_profile not in ('her','him') then
     raise exception 'Choose either the her or him profile.';
   end if;
 
