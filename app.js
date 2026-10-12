@@ -362,6 +362,17 @@
       $("#auth-submit").disabled=false;
     }
   });
+  $("#password-form").addEventListener("submit",async e=>{
+    e.preventDefault();
+    const password=$("#new-password").value, confirmPassword=$("#confirm-password").value;
+    if(password.length<10){$("#password-message").textContent="Use at least 10 characters.";return;}
+    if(password!==confirmPassword){$("#password-message").textContent="The passwords do not match.";return;}
+    try {
+      const {error}=await supabase.auth.updateUser({password});
+      if(error)throw error;
+      $("#password-dialog").close();$("#password-form").reset();toast("Your password has been updated.");
+    } catch(err){$("#password-message").textContent=err.message||"Could not update the password.";}
+  });
   $("#forgot-password").addEventListener("click",async()=>{
     if(!isConfigured())return;
     const email=$("#auth-email").value.trim();
