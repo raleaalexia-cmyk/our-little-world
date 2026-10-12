@@ -21,24 +21,17 @@
       <h1>Our Little<br><em>World.</em></h1>
       <p class="muted auth-copy">Your private little space for two accounts, shared dreams, and memories.</p>
       <div class="profile-picks" id="profile-picks">
-        <button type="button" class="profile-pick active" data-profile="her"><span class="profile-symbol">♡</span><strong>For her</strong><small>Pink profile</small></button>
-        <button type="button" class="profile-pick" data-profile="him"><span class="profile-symbol blue">✦</span><strong>For him</strong><small>Blue profile</small></button>
+        <button type="button" class="profile-pick active" data-profile="her"><span class="profile-symbol">♡</span><strong>Alexia</strong><small>Her · Pink profile</small></button>
+        <button type="button" class="profile-pick" data-profile="him"><span class="profile-symbol blue">✦</span><strong>Dyan</strong><small>Him · Blue profile</small></button>
       </div>
-      <div class="auth-tabs">
-        <button class="tab active" data-auth-mode="login">Log in</button>
-        <button class="tab" data-auth-mode="signup">Create an account</button>
-      </div>
+      <div class="login-choice"><span class="login-choice-label">SELECT YOUR PROFILE</span><strong id="selected-login-name">Alexia</strong><span id="selected-login-hint">Her space · pink</span></div>
       <form id="auth-form">
-        <label>Your name<input id="auth-name" type="text" autocomplete="nickname" maxlength="40" placeholder="What should we call you?" required></label>
-        <label>Email address<input id="auth-email" type="email" autocomplete="email" placeholder="you@example.com" required></label>
-        <label>Password<input id="auth-password" type="password" autocomplete="current-password" minlength="10" placeholder="At least 10 characters" required></label>
-        <label id="setup-code-label" class="hidden">Private couple setup code<input id="auth-setup-code" type="password" autocomplete="off" placeholder="The private setup code" minlength="8"></label>
-        <button class="btn btn-primary full" id="auth-submit" type="submit">Log in <span>↗</span></button>
-        <button type="button" class="text-button auth-forgot" id="forgot-password">Forgot your password?</button>
+        <label>Password<input id="auth-password" type="password" autocomplete="current-password" minlength="10" placeholder="Enter your password" required></label>
+        <button class="btn btn-primary full" id="auth-submit" type="submit">Log in as Alexia <span>↗</span></button>
       </form>
       <p id="auth-message" class="form-message" aria-live="polite"></p>
       <p id="configuration-warning" class="config-warning hidden">Secure login is not connected yet. The site owner must finish the Supabase setup before accounts can be created or used. <a href="https://github.com/raleaalexia-cmyk/our-little-world#required-setup-before-login-can-work" target="_blank" rel="noopener">Open setup guide ↗</a></p>
-      <p class="tiny-note">Create one account for her and one for him. After both are registered, no more accounts can be added.</p>
+      <p class="tiny-note">Private login for Alexia and Dyan only.</p>
     </section>
     <p class="auth-foot">MADE FOR YOUR NEXT CHAPTER <span>✳</span></p>
   </main>
@@ -76,7 +69,6 @@
   </main>
   <dialog id="add-dialog" class="modal"><form id="add-form" method="dialog"><div class="modal-head"><div><p class="eyebrow">A NEW LITTLE ADVENTURE</p><h2>Add to our list</h2></div><button type="button" class="close-button" id="close-add" aria-label="Close">×</button></div><label>What's the dream? <input id="item-title" maxlength="120" placeholder="e.g. Watch the sunrise together" required></label><label>A little more about it <textarea id="item-description" rows="2" maxlength="400" placeholder="Where, when, or why it matters (optional)"></textarea></label><div class="form-row"><label>Category<select id="item-category"><option value="date">Date idea</option><option value="travel">Place to go</option><option value="food">Food & drink</option><option value="adventure">Adventure</option><option value="little">Little thing</option></select></label><label>Priority<select id="item-priority"><option value="someday">Someday</option><option value="soon">Soon-ish</option><option value="must">Must do ♡</option></select></label></div><label>Dream date (optional)<input id="item-date" type="date"></label><button class="btn btn-primary full" type="submit">Add to our world <span>♡</span></button><p id="add-error" class="form-message"></p></form></dialog>
   <dialog id="folder-dialog" class="modal small-modal"><form id="folder-form" method="dialog"><div class="modal-head"><div><p class="eyebrow">MAKE A LITTLE ALBUM</p><h2>New folder</h2></div><button type="button" class="close-button" id="close-folder">×</button></div><label>Folder name<input id="folder-name" maxlength="32" placeholder="e.g. Paris weekend" required></label><button class="btn btn-primary full" type="submit">Create folder</button></form></dialog>
-  <dialog id="password-dialog" class="modal small-modal"><form id="password-form" method="dialog"><div class="modal-head"><div><p class="eyebrow">ACCOUNT SECURITY</p><h2>Choose a new password</h2></div></div><label>New password<input id="new-password" type="password" minlength="10" autocomplete="new-password" required placeholder="At least 10 characters"></label><label>Confirm password<input id="confirm-password" type="password" minlength="10" autocomplete="new-password" required placeholder="Enter it again"></label><p id="password-message" class="form-message"></p><button class="btn btn-primary full" type="submit">Save new password</button></form></dialog>
   <dialog id="account-dialog" class="modal small-modal"><div class="modal-head"><div><p class="eyebrow">YOUR SPACE</p><h2>Account</h2></div><button type="button" class="close-button" id="close-account">×</button></div><p class="muted" id="account-email"></p><p class="privacy-copy">Your account uses secure sign-in. Only the two registered couple accounts can access the shared bucket list and photo albums.</p><button class="btn btn-outline full" id="account-signout">Log out</button></dialog>
   <div id="toast" class="toast" role="status" aria-live="polite"></div>
   <script src="app.js"></script>
