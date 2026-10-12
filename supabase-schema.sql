@@ -14,6 +14,24 @@ create table if not exists public.couple_members (
 -- Provision both Auth users in Supabase Dashboard > Authentication > Users BEFORE running this script.
 -- In the Supabase SQL Editor only, replace these two email placeholders with the exact Auth email addresses.
 -- Do not commit real account passwords to GitHub; these are email identifiers only.
+do $
+declare
+  v_her uuid;
+  v_him uuid;
+begin
+  select id into v_her from auth.users where lower(email) = lower('ALEXIA_EMAIL_REPLACE_THIS');
+  select id into v_him from auth.users where lower(email) = lower('DYAN_EMAIL_REPLACE_THIS');
+  if v_her is null then
+    raise exception 'Alexia Auth user not found. Create the user and replace ALEXIA_EMAIL_REPLACE_THIS in the SQL Editor.';
+  end if;
+  if v_him is null then
+    raise exception 'Dyan Auth user not found. Create the user and replace DYAN_EMAIL_REPLACE_THIS in the SQL Editor.';
+  end if;
+  if v_her = v_him then
+    raise exception 'Alexia and Dyan must be two different Auth users.';
+  end if;
+end $;
+
 insert into public.couple_members(user_id, profile)
 select id, 'her' from auth.users where lower(email) = lower('ALEXIA_EMAIL_REPLACE_THIS')
 on conflict (user_id) do update set profile = 'her';
