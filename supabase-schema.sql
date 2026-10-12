@@ -25,7 +25,6 @@ alter table public.couple_members enable row level security;
 drop policy if exists "Members can view their own membership" on public.couple_members;
 create policy "Members can view their own membership" on public.couple_members
 for select to authenticated using (user_id = (select auth.uid()));
-revoke all on public.couple_settings from public, anon, authenticated;
 revoke all on public.couple_members from public, anon, authenticated;
 grant select on public.couple_members to authenticated;
 
@@ -39,18 +38,6 @@ as $$
 $$;
 revoke all on function public.is_couple_member() from public, anon;
 grant execute on function public.is_couple_member() to authenticated;
-
--- Check an item's original owner without exposing the other member's account row.
--- This also prevents old non-couple rows in a previously used table from leaking into the shared list.
-create or replace function public.is_couple_user(p_user_id uuid)
-returns boolean
-language sql stable security definer
-set search_path = public
-as $$
-  select exists (select 1 from public.couple_members where user_id = p_user_id);
-$$;
-revoke all on function public.is_couple_user(uuid) from public, anon;
-grant execute on function public.is_couple_user(uuid) to authenticated;
 
 create or replace function public.get_my_couple_profile()
 returns text
@@ -84,14 +71,15 @@ drop policy if exists "Couple members can view the shared bucket list" on public
 drop policy if exists "Couple members can add to the shared bucket list" on public.bucket_items;
 drop policy if exists "Couple members can update the shared bucket list" on public.bucket_items;
 drop policy if exists "Couple members can delete from the shared bucket list" on public.bucket_items;
+drop function if exists public.is_couple_user(uuid);
 create policy "Couple members can view the shared bucket list" on public.bucket_items
-for select to authenticated using (public.is_couple_member() and public.is_couple_user(user_id));
+for select to authenticated using (public.is_couple_member());
 create policy "Couple members can add to the shared bucket list" on public.bucket_items
 for insert to authenticated with check (public.is_couple_member() and user_id = (select auth.uid()));
 create policy "Couple members can update the shared bucket list" on public.bucket_items
-for update to authenticated using (public.is_couple_member() and public.is_couple_user(user_id)) with check (public.is_couple_member() and public.is_couple_user(user_id));
+for update to authenticated using (public.is_couple_member()) with check (public.is_couple_member());
 create policy "Couple members can delete from the shared bucket list" on public.bucket_items
-for delete to authenticated using (public.is_couple_member() and public.is_couple_user(user_id));
+for delete to authenticated using (public.is_couple_member());
 create index if not exists bucket_items_completed_created_idx on public.bucket_items(completed, created_at);
 
 -- Custom folders and metadata for the private cloud photo album.
