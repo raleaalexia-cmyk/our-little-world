@@ -9,6 +9,7 @@ A responsive couple's bucket list and shared photo album with a pink **her** the
 - After both slots are claimed, the app hides account creation. Other Supabase auth accounts cannot access app content unless they have one of the two membership slots.
 - One bucket list shared by both registered accounts, with categories, priorities, search, progress and completed items moved to the bottom.
 - Shared private cloud photo album with folders, upload, download and delete.
+- Live refresh of the bucket list and photo/folder changes across open devices through Supabase Realtime.
 - Mobile-responsive design.
 - Password reset email flow.
 
@@ -23,7 +24,7 @@ Create a project at https://supabase.com/ and wait for it to finish provisioning
 3. Run the SQL in Supabase. Do **not** save or commit your chosen code in this public GitHub repository.
 4. Keep the code private. Enter it in the website only while registering the her and him accounts. The database stores a bcrypt hash, not the plain code.
 
-The SQL script sets up the two membership slots, security policies, shared bucket-list database, private photo metadata, and a private Storage bucket. If you already ran an older version of the starter SQL, run this updated script after replacing the setup-code placeholder.
+The SQL script sets up the two membership slots, security policies, shared bucket-list database, private photo metadata, a private Storage bucket, and Supabase Realtime publication for live updates. If you already ran an older version of the starter SQL, run this updated script after replacing the setup-code placeholder.
 
 ### 3. Connect the front end
 1. In Supabase, open Project Settings → API.
@@ -46,7 +47,7 @@ In Supabase Authentication settings:
 Choose different strong passwords for each person. Do not share either person's password.
 
 ## Privacy and limitations
-- The GitHub repository is public; never commit passwords, the setup code, or a service-role key.
+- The GitHub repository is public; never commit passwords, the actual setup code, or a service-role key. The SQL file deliberately contains only a placeholder. Replace it in the Supabase SQL Editor before running the script.
 - The browser anon/publishable key is intended to be public, but database and Storage safety depends on the supplied row-level security policies.
 - The setup code is only for claiming the two initial profile slots; it is not either person's login password.
 - Because GitHub Pages is a static host, Supabase performs authentication and enforces access to shared cloud data.
