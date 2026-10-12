@@ -1,25 +1,26 @@
 -- Our Little World: secure two-account setup.
--- IMPORTANT: In the Supabase SQL Editor only, replace the placeholder inside the single-quoted INSERT value below with a private code of at least 24 characters.
--- Do not replace the explanatory comment and do not commit the chosen code to this public GitHub repository.
--- Enter that same code only while creating the two accounts.
-
-create extension if not exists pgcrypto with schema extensions;
-
--- The app supports exactly two membership slots: her and him.
-create table if not exists public.couple_settings (
-  id boolean primary key default true check (id = true),
-  setup_code_hash text not null,
-  created_at timestamptz not null default now()
-);
-insert into public.couple_settings (id, setup_code_hash)
-values (true, extensions.crypt('REPLACE_WITH_A_PRIVATE_CODE_YOU_CHOOSE', extensions.gen_salt('bf')))
-on conflict (id) do update set setup_code_hash = excluded.setup_code_hash;
+-- There is intentionally no public sign-up/claim-code flow. The site logs into two
+-- Supabase Auth users created privately by the site owner.
+drop function if exists public.claim_couple_account(text,text);
+drop function if exists public.get_couple_status();
+drop table if exists public.couple_settings;
 
 create table if not exists public.couple_members (
   user_id uuid primary key references auth.users(id) on delete cascade,
   profile text not null unique check (profile in ('her','him')),
   created_at timestamptz not null default now()
 );
+
+-- Provision both Auth users in Supabase Dashboard > Authentication > Users BEFORE running this script.
+-- In the Supabase SQL Editor only, replace these two email placeholders with the exact Auth email addresses.
+-- Do not commit real account passwords to GitHub; these are email identifiers only.
+insert into public.couple_members(user_id, profile)
+select id, 'her' from auth.users where lower(email) = lower('ALEXIA_EMAIL_REPLACE_THIS')
+on conflict (user_id) do update set profile = 'her';
+
+insert into public.couple_members(user_id, profile)
+select id, 'him' from auth.users where lower(email) = lower('DYAN_EMAIL_REPLACE_THIS')
+on conflict (user_id) do update set profile = 'him';
 alter table public.couple_members enable row level security;
 drop policy if exists "Members can view their own membership" on public.couple_members;
 create policy "Members can view their own membership" on public.couple_members
@@ -51,21 +52,6 @@ $;
 revoke all on function public.is_couple_user(uuid) from public, anon;
 grant execute on function public.is_couple_user(uuid) to authenticated;
 
--- Safe status only: this exposes occupied slots, never account emails or the setup-code hash.
-create or replace function public.get_couple_status()
-returns jsonb
-language sql stable security definer
-set search_path = public
-as $$
-  select jsonb_build_object(
-    'her_taken', exists(select 1 from public.couple_members where profile = 'her'),
-    'him_taken', exists(select 1 from public.couple_members where profile = 'him'),
-    'complete', (select count(*) >= 2 from public.couple_members)
-  );
-$$;
-revoke all on function public.get_couple_status() from public;
-grant execute on function public.get_couple_status() to anon, authenticated;
-
 create or replace function public.get_my_couple_profile()
 returns text
 language sql stable security definer
@@ -75,59 +61,6 @@ as $$
 $$;
 revoke all on function public.get_my_couple_profile() from public, anon;
 grant execute on function public.get_my_couple_profile() to authenticated;
-
--- A valid code and an authenticated Supabase user are both required to claim a slot.
--- Unique constraints enforce at most one account for each role, so there can never be a third member.
-create or replace function public.claim_couple_account(p_setup_code text, p_profile text)
-returns text
-language plpgsql security definer
-set search_path = public, extensions
-as $$
-declare
-  v_hash text;
-  v_existing text;
-begin
-  if (select auth.uid()) is null then
-    raise exception 'Please sign in before completing account setup.';
-  end if;
-
-  select profile into v_existing
-  from public.couple_members
-  where user_id = (select auth.uid());
-
-  if v_existing is not null then
-    return v_existing;
-  end if;
-
-  if p_profile is null or p_profile not in ('her','him') then
-    raise exception 'Choose either the her or him profile.';
-  end if;
-
-  select setup_code_hash into v_hash
-  from public.couple_settings
-  where id = true
-  for update;
-
-  if v_hash is null or p_setup_code is null or extensions.crypt(p_setup_code, v_hash) <> v_hash then
-    raise exception 'The private couple setup code is incorrect.';
-  end if;
-
-  if exists(select 1 from public.couple_members where profile = p_profile) then
-    raise exception 'That profile already has an account. Each profile can be registered only once.';
-  end if;
-
-  begin
-    insert into public.couple_members(user_id, profile)
-    values ((select auth.uid()), p_profile);
-  exception when unique_violation then
-    raise exception 'That profile or account has already been registered. Only the two original accounts are allowed.';
-  end;
-
-  return p_profile;
-end;
-$$;
-revoke all on function public.claim_couple_account(text,text) from public, anon;
-grant execute on function public.claim_couple_account(text,text) to authenticated;
 
 -- Shared bucket list. user_id identifies who originally added an item; both members may see and manage all items.
 create table if not exists public.bucket_items (
