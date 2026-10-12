@@ -13,7 +13,7 @@ create table if not exists public.couple_settings (
 );
 insert into public.couple_settings (id, setup_code_hash)
 values (true, extensions.crypt('REPLACE_WITH_A_PRIVATE_CODE_YOU_CHOOSE', extensions.gen_salt('bf')))
-on conflict (id) do nothing;
+on conflict (id) do update set setup_code_hash = excluded.setup_code_hash;
 
 create table if not exists public.couple_members (
   user_id uuid primary key references auth.users(id) on delete cascade,
@@ -214,5 +214,22 @@ create policy "Couple members can upload shared photos" on storage.objects
 for insert to authenticated with check (bucket_id = 'couple-photos' and public.is_couple_member());
 create policy "Couple members can delete shared photos" on storage.objects
 for delete to authenticated using (bucket_id = 'couple-photos' and public.is_couple_member());
+
+
+-- Enable database-change broadcasts so the other device refreshes without reloading.
+do $
+begin
+  if exists (select 1 from pg_publication where pubname = 'supabase_realtime') then
+    if not exists (select 1 from pg_publication_tables where pubname = 'supabase_realtime' and schemaname = 'public' and tablename = 'bucket_items') then
+      alter publication supabase_realtime add table public.bucket_items;
+    end if;
+    if not exists (select 1 from pg_publication_tables where pubname = 'supabase_realtime' and schemaname = 'public' and tablename = 'couple_photos') then
+      alter publication supabase_realtime add table public.couple_photos;
+    end if;
+    if not exists (select 1 from pg_publication_tables where pubname = 'supabase_realtime' and schemaname = 'public' and tablename = 'couple_photo_folders') then
+      alter publication supabase_realtime add table public.couple_photo_folders;
+    end if;
+  end if;
+end $;
 
 -- Old note table, if present, is intentionally unused by this version of the website.
