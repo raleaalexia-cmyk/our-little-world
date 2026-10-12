@@ -19,7 +19,7 @@
   ];
   let authMode = "login", selectedProfile = "her", user = null, profileName = "", profileRole = null, needsClaim = false;
   let items = [], filter = "all", categoryFilter = "all", query = "";
-  let photoFolder = "Us", photoFolders = [...defaultFolders], photos = [], signedPhotoUrls = {};
+  let photoFolder = "Us", photoFolders = [...defaultFolders], photos = [], realtimeChannel = null;
   // Remove credentials saved by the old browser-only preview.
   try { localStorage.removeItem("olw-profiles"); localStorage.removeItem("olw-current-profile"); } catch (_) {}
   const toast = (message) => {
@@ -136,6 +136,7 @@
     await showApp();
   }
   async function signOut() {
+    if (realtimeChannel && supabase) { try { await supabase.removeChannel(realtimeChannel); } catch (_) {} realtimeChannel = null; }
     if (supabase) await supabase.auth.signOut();
     user = null; profileRole = null; profileName = ""; needsClaim = false;
     $("#auth-password").value = ""; $("#auth-setup-code").value = "";
@@ -173,6 +174,32 @@
     const {error} = await supabase.from("bucket_items").delete().eq("id",item.id);
     if (error) throw error;
   }
+  async function connectRealtime() {
+    if (!supabase || !profileRole) return;
+    if (realtimeChannel) {
+      try { await supabase.removeChannel(realtimeChannel); } catch (_) {}
+      realtimeChannel = null;
+    }
+    realtimeChannel = supabase.channel("our-little-world-shared")
+      .on("postgres_changes", {event:"*",schema:"public",table:"bucket_items"}, async () => {
+        if (!user || !profileRole) return;
+        try { await loadItems(); renderItems(); } catch (e) { console.error("Bucket-list refresh failed",e); }
+      })
+      .on("postgres_changes", {event:"*",schema:"public",table:"couple_photos"}, async () => {
+        if (!user || !profileRole) return;
+        try { await loadCloudPhotos(); } catch (e) { console.error("Photo refresh failed",e); }
+      })
+      .on("postgres_changes", {event:"*",schema:"public",table:"couple_photo_folders"}, async () => {
+        if (!user || !profileRole) return;
+        try { await loadCloudFolders(); renderPhotos(); } catch (e) { console.error("Folder refresh failed",e); }
+      })
+      .subscribe(status => {
+        const badge = $("#sync-status");
+        if (!badge) return;
+        if (status === "SUBSCRIBED") badge.textContent = "● Shared and live";
+        else if (status === "CHANNEL_ERROR" || status === "TIMED_OUT") badge.textContent = "● Sync reconnecting";
+      });
+  }
   async function showApp() {
     if (!user || !profileRole) { showAuth(); return; }
     $("#auth-password").value = "";
@@ -187,8 +214,9 @@
     try {
       await loadItems();
       renderItems();
-      await loadCloudPhotos();
       await loadCloudFolders();
+      await loadCloudPhotos();
+      await connectRealtime();
     } catch (e) {
       console.error(e); toast("Couldn't load shared content. Check the Supabase setup and policies.");
     }
