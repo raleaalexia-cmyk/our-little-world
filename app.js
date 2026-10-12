@@ -2,8 +2,9 @@
   const $ = (s) => document.querySelector(s);
   const $$ = (s) => [...document.querySelectorAll(s)];
   const config = window.APP_CONFIG || {};
-  const configured = !!(config.supabaseUrl && config.supabaseAnonKey &&
-    !config.supabaseUrl.includes("YOUR_") && !config.supabaseAnonKey.includes("YOUR_"));
+  const configured = !!(config.supabaseUrl && config.supabaseAnonKey && config.alexiaEmail && config.dyanEmail &&
+    !config.supabaseUrl.includes("YOUR_") && !config.supabaseAnonKey.includes("YOUR_") &&
+    !config.alexiaEmail.includes("_AUTH_EMAIL") && !config.dyanEmail.includes("_AUTH_EMAIL"));
   const supabase = configured && window.supabase ? window.supabase.createClient(config.supabaseUrl, config.supabaseAnonKey) : null;
   const categoryNames = {date:"Date idea",travel:"Place to go",food:"Food & drink",adventure:"Adventure",little:"Little thing"};
   const defaultFolders = ["Us","Trips","Date nights","Everyday"];
@@ -17,7 +18,7 @@
     "Write down three things you want to do together this year.",
     "Go for a walk and take turns choosing every next turn."
   ];
-  let authMode = "login", selectedProfile = "her", user = null, profileName = "", profileRole = null, needsClaim = false;
+  let selectedProfile = "her", user = null, profileRole = null;
   let items = [], filter = "all", categoryFilter = "all", query = "";
   let photoFolder = "Us", photoFolders = [...defaultFolders], photos = [], realtimeChannel = null;
   // Remove credentials saved by the old browser-only preview.
@@ -33,7 +34,7 @@
     const d = new Date(value + "T12:00:00");
     return d.toLocaleDateString(undefined,{month:"short",day:"numeric",year:d.getFullYear()!==new Date().getFullYear()?"numeric":undefined});
   };
-  const isConfigured = () => !!supabase;
+  const isConfigured = () => !!(supabase && configured);
   function setAuthMessage(text, warning = false) {
     $("#auth-message").textContent = text || "";
     $("#auth-message").classList.toggle("warning-message", warning);
@@ -42,6 +43,11 @@
     document.body.classList.toggle("theme-him", selectedProfile === "him");
     document.body.classList.toggle("theme-her", selectedProfile !== "him");
     $$(".profile-pick").forEach(b => b.classList.toggle("active", b.dataset.profile === selectedProfile));
+    const dyan = selectedProfile === "him";
+    const name = dyan ? "Dyan" : "Alexia";
+    $("#selected-login-name").textContent = name;
+    $("#selected-login-hint").textContent = dyan ? "His space · blue" : "Her space · pink";
+    $("#auth-submit").innerHTML = 'Log in as ' + name + ' <span>↗</span>';
   }
   function showAuth() {
     $("#auth-screen").classList.remove("hidden");
@@ -49,104 +55,36 @@
     $("#configuration-warning").classList.toggle("hidden", isConfigured());
     $("#auth-submit").disabled = !isConfigured();
     if (!isConfigured()) setAuthMessage("Secure login is not connected. Ask the site owner to finish the Supabase setup.", true);
-    refreshSignupAvailability();
     updateRoleTheme();
   }
-  async function getCoupleStatus() {
-    if (!isConfigured()) return {her_taken:false, him_taken:false, complete:false};
-    const {data,error} = await supabase.rpc("get_couple_status");
-    if (error) throw error;
-    return data || {her_taken:false, him_taken:false, complete:false};
-  }
-  async function refreshSignupAvailability() {
-    const signupTab = $('[data-auth-mode="signup"]');
-    if (!signupTab) return;
-    try {
-      const status = await getCoupleStatus();
-      const full = !!status.complete;
-      signupTab.classList.toggle("hidden", full);
-      if (authMode === "signup" && full) {
-        authMode = "login";
-        $$$("[data-auth-mode]").forEach(x => x.classList.toggle("active", x.dataset.authMode === authMode));
-        $("#setup-code-label").classList.add("hidden");
-        $("#auth-name").closest("label").classList.add("hidden");
-        $("#auth-name").required = false;
-        $("#forgot-password").classList.remove("hidden");
-        $("#auth-submit").innerHTML = 'Log in <span>↗</span>';
-        setAuthMessage("Both accounts already exist. New account creation is closed.", true);
-      }
-      const roles = {her:!!status.her_taken,him:!!status.him_taken};
-      $$(".profile-pick").forEach(btn => {
-        btn.disabled = authMode === "signup" && roles[btn.dataset.profile];
-        btn.title = btn.disabled ? "This profile already has an account." : "";
-        btn.classList.toggle("role-taken", btn.disabled);
-      });
-      if (authMode === "signup" && roles[selectedProfile]) {
-        selectedProfile = roles.her ? "him" : "her";
-        updateRoleTheme();
-      }
-    } catch (e) {
-      console.error(e);
-      setAuthMessage("Could not check account setup. Run the database setup SQL, then try again.", true);
-    }
-  }
-  async function checkMembership(authUser) {
+  async function checkMembership() {
     const {data,error} = await supabase.rpc("get_my_couple_profile");
     if (error) throw error;
-    if (data === "her" || data === "him") return data;
-    return null;
+    return data === "her" || data === "him" ? data : null;
   }
-  async function claimAccount(setupCode, role) {
-    const {data,error} = await supabase.rpc("claim_couple_account", {p_setup_code: setupCode, p_profile: role});
-    if (error) throw error;
-    return data;
-  }
-  async function loginUser(email,password,setupCode) {
+  async function loginUser(password) {
+    const email = selectedProfile === "him" ? config.dyanEmail.trim() : config.alexiaEmail.trim();
+    if (!email || !password) throw new Error("Enter the password for the selected profile.");
     const {data,error} = await supabase.auth.signInWithPassword({email,password});
-    if (error) throw error;
+    if (error) throw new Error("That password didn't work for this profile. Check the selected profile and try again.");
     user = data.user;
-    profileName = user.user_metadata?.display_name || "";
-    const existingRole = await checkMembership(user);
-    if (existingRole) {
-      needsClaim = false;
-      profileRole = existingRole;
-      selectedProfile = existingRole;
-      updateRoleTheme();
-      await showApp();
-      return;
+    const role = await checkMembership();
+    if (role !== selectedProfile) {
+      await supabase.auth.signOut();
+      user = null; profileRole = null;
+      throw new Error("This login is not assigned to that profile. Ask the site owner to check the two private account assignments.");
     }
-    // Accounts created while email confirmation is enabled need to claim their slot after confirmation.
-    const pendingRole = user.user_metadata?.couple_profile;
-    const role = (pendingRole === "her" || pendingRole === "him") ? pendingRole : selectedProfile;
-    if (!setupCode || setupCode.length < 8) {
-      needsClaim = true;
-      $("#setup-code-label").classList.remove("hidden");
-      selectedProfile = role;
-      updateRoleTheme();
-      throw new Error("Your account still needs to finish first-time setup. Enter the private couple setup code and press Log in again.");
-    }
-    profileRole = await claimAccount(setupCode,role);
-    needsClaim = false;
-    $("#auth-setup-code").value = "";
-    selectedProfile = profileRole;
-    updateRoleTheme();
-    await refreshSignupAvailability();
-    selectedProfile = profileRole;
+    profileRole = role;
     updateRoleTheme();
     await showApp();
   }
   async function signOut() {
     if (realtimeChannel && supabase) { try { await supabase.removeChannel(realtimeChannel); } catch (_) {} realtimeChannel = null; }
     if (supabase) await supabase.auth.signOut();
-    user = null; profileRole = null; profileName = ""; needsClaim = false;
-    $("#auth-password").value = ""; $("#auth-setup-code").value = "";
-    authMode = "login";
-    $$("[data-auth-mode]").forEach(x => x.classList.toggle("active", x.dataset.authMode === "login"));
-    $("#auth-name").closest("label").classList.add("hidden");
-    $("#auth-name").required = false;
-    $("#setup-code-label").classList.add("hidden");
-    $("#forgot-password").classList.remove("hidden");
-    $("#auth-submit").innerHTML = 'Log in <span>↗</span>';
+    user = null; profileRole = null; items = []; photos = [];
+    $("#auth-password").value = "";
+    selectedProfile = "her";
+    updateRoleTheme();
     showAuth();
   }
   async function loadItems() {
@@ -201,15 +139,14 @@
       });
   }
   async function showApp() {
-    if (!user || !profileRole) { showAuth(); return; }
+    if (!user || !profileRole || profileRole !== selectedProfile) { showAuth(); return; }
     $("#auth-password").value = "";
-    $("#auth-setup-code").value = "";
     $("#auth-screen").classList.add("hidden");
     $("#app-screen").classList.remove("hidden");
     updateRoleTheme();
     $("#sync-status").textContent = "● Shared and synced";
-    $("#account-email").textContent = (profileName ? profileName + " · " : "") + (user.email || "");
-    $("#user-greeting").textContent = profileName ? "Hi, " + profileName : (selectedProfile === "him" ? "His little world" : "Her little world");
+    $("#account-email").textContent = (selectedProfile === "him" ? "Dyan · " : "Alexia · ") + (user.email || "");
+    $("#user-greeting").textContent = selectedProfile === "him" ? "Dyan, welcome to your little world" : "Alexia, welcome to your little world";
     $("#today-label").textContent = new Date().toLocaleDateString(undefined,{weekday:"long",month:"long",day:"numeric"});
     try {
       await loadItems();
@@ -355,99 +292,31 @@
     setTimeout(()=>URL.revokeObjectURL(url),1500);
   }
 
-  $$(".profile-pick").forEach(btn=>btn.addEventListener("click",()=>{
-    if(btn.disabled)return;
-    selectedProfile=btn.dataset.profile; updateRoleTheme(); setAuthMessage("");
-  }));
-  $$$("[data-auth-mode]").forEach(btn=>btn.addEventListener("click",async()=>{
-    authMode=btn.dataset.authMode;
-    $$$("[data-auth-mode]").forEach(x=>x.classList.toggle("active",x===btn));
-    const signup=authMode==="signup";
-    $("#auth-submit").innerHTML=signup?'Create account <span>♡</span>':'Log in <span>↗</span>';
-    $("#auth-password").autocomplete=signup?"new-password":"current-password";
-    $("#auth-name").closest("label").classList.toggle("hidden",!signup);
-    $("#auth-name").required = signup;
-    $("#setup-code-label").classList.toggle("hidden",!signup && !needsClaim);
-    $("#forgot-password").classList.toggle("hidden",signup);
+  $$(".profile-pick").forEach(btn => btn.addEventListener("click", () => {
+    selectedProfile = btn.dataset.profile;
+    updateRoleTheme();
     setAuthMessage("");
-    await refreshSignupAvailability();
   }));
-  $("#auth-form").addEventListener("submit",async e=>{
+  $("#auth-form").addEventListener("submit", async e => {
     e.preventDefault();
-    if(!isConfigured()){setAuthMessage("Secure login is unavailable until Supabase is configured.",true);return;}
-    const email=$("#auth-email").value.trim(), password=$("#auth-password").value, name=$("#auth-name").value.trim(), code=$("#auth-setup-code").value.trim();
-    if(password.length<10){setAuthMessage("Use a password with at least 10 characters.");return;}
-    $("#auth-submit").disabled=true; setAuthMessage("");
-    try {
-      if(authMode==="signup") {
-        if(!name){setAuthMessage("Enter the name for this profile.");return;}
-        if(code.length<8){setAuthMessage("Enter the private couple setup code.");return;}
-        const status=await getCoupleStatus();
-        if(status.complete){authMode="login";$("#auth-submit").innerHTML='Log in <span>↗</span>';$("#setup-code-label").classList.add("hidden");$("#auth-name").closest("label").classList.add("hidden");$("#auth-name").required=false;$("#forgot-password").classList.remove("hidden");$$("[data-auth-mode]").forEach(x=>x.classList.toggle("active",x.dataset.authMode==="login"));throw new Error("Both accounts are already set up. New account creation is closed.");}
-        if((selectedProfile==="her"&&status.her_taken)||(selectedProfile==="him"&&status.him_taken))throw new Error("That profile already has an account. Choose the other profile.");
-        const {data,error}=await supabase.auth.signUp({email,password,options:{data:{display_name:name,couple_profile:selectedProfile}}});
-        if(error)throw error;
-        if(data.session && data.user) {
-          user=data.user; profileName=name;
-          profileRole=await claimAccount(code,selectedProfile);
-          $("#auth-setup-code").value = "";
-          await refreshSignupAvailability();
-          selectedProfile=profileRole;
-          updateRoleTheme();
-          await showApp();
-          toast("Your account is ready ♡");
-        } else {
-          needsClaim = true;
-          authMode = "login";
-          $$("[data-auth-mode]").forEach(x => x.classList.toggle("active", x.dataset.authMode === "login"));
-          $("#auth-name").closest("label").classList.add("hidden");
-          $("#auth-name").required = false;
-          $("#setup-code-label").classList.remove("hidden");
-          $("#forgot-password").classList.remove("hidden");
-          $("#auth-submit").innerHTML = 'Log in <span>↗</span>';
-          $("#auth-password").autocomplete = "current-password";
-          setAuthMessage("Check your email to confirm your account. Then log in with the same profile and private setup code to finish setup.",true);
-        }
-      } else {
-        await loginUser(email,password,code);
-      }
-    } catch(err) {
-      console.error(err);
-      if (user && !profileRole && authMode === "signup") {
-        needsClaim = true;
-        authMode = "login";
-        $$("[data-auth-mode]").forEach(x => x.classList.toggle("active", x.dataset.authMode === "login"));
-        $("#auth-name").closest("label").classList.add("hidden");
-        $("#auth-name").required = false;
-        $("#setup-code-label").classList.remove("hidden");
-        $("#forgot-password").classList.remove("hidden");
-        $("#auth-submit").innerHTML = 'Log in <span>↗</span>';
-      }
-      setAuthMessage(err.message || "Unable to complete sign-in.");
-    } finally {
-      $("#auth-submit").disabled=false;
+    if (!isConfigured()) {
+      setAuthMessage("Secure login is not connected yet. Follow the setup guide to connect the two existing accounts.", true);
+      return;
     }
-  });
-  $("#password-form").addEventListener("submit",async e=>{
-    e.preventDefault();
-    const password=$("#new-password").value, confirmPassword=$("#confirm-password").value;
-    if(password.length<10){$("#password-message").textContent="Use at least 10 characters.";return;}
-    if(password!==confirmPassword){$("#password-message").textContent="The passwords do not match.";return;}
+    const password = $("#auth-password").value;
+    if (!password) { setAuthMessage("Enter your password."); return; }
+    $("#auth-submit").disabled = true;
+    setAuthMessage("");
     try {
-      const {error}=await supabase.auth.updateUser({password});
-      if(error)throw error;
-      $("#password-dialog").close();$("#password-form").reset();toast("Your password has been updated.");
-    } catch(err){$("#password-message").textContent=err.message||"Could not update the password.";}
-  });
-  $("#forgot-password").addEventListener("click",async()=>{
-    if(!isConfigured())return;
-    const email=$("#auth-email").value.trim();
-    if(!email){setAuthMessage("Enter your email address first.");return;}
-    try {
-      const {error}=await supabase.auth.resetPasswordForEmail(email,{redirectTo:window.location.origin+window.location.pathname});
-      if(error)throw error;
-      setAuthMessage("If that account exists, a password reset email has been sent.",true);
-    } catch(e){setAuthMessage(e.message||"Could not send the reset email.");}
+      await loginUser(password);
+    } catch (err) {
+      console.error(err);
+      setAuthMessage(err.message || "Unable to log in. Check your password and connection.");
+      $("#auth-password").value = "";
+      $("#auth-password").focus();
+    } finally {
+      $("#auth-submit").disabled = !isConfigured();
+    }
   });
   function openAdd() {
     $("#add-form").reset(); delete $("#add-form").dataset.editId;
@@ -515,35 +384,38 @@
     $("#prompt-text").textContent=next;
   });
   async function initialize() {
-    $("#auth-name").closest("label").classList.add("hidden");
-    $("#auth-name").required = false;
-    $("#setup-code-label").classList.add("hidden");
-    $("#forgot-password").classList.remove("hidden");
-    if(!isConfigured()){showAuth();return;}
+    updateRoleTheme();
+    if (!isConfigured()) { showAuth(); return; }
     try {
-      const {data,error}=await supabase.auth.getSession();
-      if(error)throw error;
-      if(data.session?.user) {
-        user=data.session.user;
-        profileName=user.user_metadata?.display_name||"";
-        profileRole=await checkMembership(user);
-        if(profileRole) {
-          selectedProfile=profileRole; await showApp();
-        } else {
-          needsClaim = true;
-          selectedProfile=(user.user_metadata?.couple_profile==="him"?"him":"her");
+      const {data,error} = await supabase.auth.getSession();
+      if (error) throw error;
+      const sessionUser = data.session?.user;
+      if (sessionUser) {
+        user = sessionUser;
+        const role = await checkMembership();
+        if (role === "her" || role === "him") {
+          profileRole = role; selectedProfile = role;
           updateRoleTheme();
-          $("#setup-code-label").classList.remove("hidden");
-          setAuthMessage("Finish your first-time setup by entering your private couple setup code and signing in.",true);
+          await showApp();
+        } else {
+          await supabase.auth.signOut();
+          user = null; profileRole = null;
           showAuth();
+          setAuthMessage("This account is not one of the two approved logins. Use the Alexia or Dyan account set up by the site owner.", true);
         }
       } else showAuth();
-    } catch(err) {console.error(err);showAuth();setAuthMessage("Unable to check login status. Verify the Supabase setup and database SQL.",true);}
-    supabase.auth.onAuthStateChange(async(event,session)=>{
-      if(event==="SIGNED_OUT"){user=null;profileRole=null;showAuth();}
-      if(event==="PASSWORD_RECOVERY"){$("#password-dialog").showModal();}
+    } catch (err) {
+      console.error(err);
+      showAuth();
+      setAuthMessage("Unable to verify your login. Check that Supabase and the two account assignments have been configured.", true);
+    }
+    supabase.auth.onAuthStateChange(async event => {
+      if (event === "SIGNED_OUT") {
+        if (realtimeChannel) { try { await supabase.removeChannel(realtimeChannel); } catch (_) {} realtimeChannel = null; }
+        user = null; profileRole = null; items = []; photos = [];
+        showAuth();
+      }
     });
-    if (window.location.hash.includes("type=recovery")) $("#password-dialog").showModal();
   }
   initialize();
 })();
