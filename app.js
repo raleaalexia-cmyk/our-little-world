@@ -54,7 +54,8 @@
     $("#app-screen").classList.add("hidden");
     $("#configuration-warning").classList.toggle("hidden", isConfigured());
     $("#auth-submit").disabled = !isConfigured();
-    if (!isConfigured()) setAuthMessage("Secure login is not connected. Ask the site owner to finish the Supabase setup.", true);
+    if (!isConfigured()) setAuthMessage("Secure login is not connected. Add the Supabase URL, public key, and both account emails in config.js.", true);
+    else setAuthMessage("");
     updateRoleTheme();
   }
   async function checkMembership() {
@@ -68,7 +69,14 @@
     const {data,error} = await supabase.auth.signInWithPassword({email,password});
     if (error) throw new Error("That password didn't work for this profile. Check the selected profile and try again.");
     user = data.user;
-    const role = await checkMembership();
+    let role = null;
+    try {
+      role = await checkMembership();
+    } catch (membershipError) {
+      await supabase.auth.signOut();
+      user = null; profileRole = null;
+      throw new Error("The database setup is incomplete. Ask the site owner to run supabase-schema.sql and connect the two account emails.");
+    }
     if (role !== selectedProfile) {
       await supabase.auth.signOut();
       user = null; profileRole = null;
@@ -392,7 +400,14 @@
       const sessionUser = data.session?.user;
       if (sessionUser) {
         user = sessionUser;
-        const role = await checkMembership();
+        let role = null;
+        try {
+          role = await checkMembership();
+        } catch (membershipError) {
+          await supabase.auth.signOut();
+          user = null;
+          throw membershipError;
+        }
         if (role === "her" || role === "him") {
           profileRole = role; selectedProfile = role;
           updateRoleTheme();
