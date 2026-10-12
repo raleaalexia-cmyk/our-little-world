@@ -137,6 +137,7 @@
     authMode = "login";
     $("[data-auth-mode]").forEach(x => x.classList.toggle("active", x.dataset.authMode === "login"));
     $("#auth-name").closest("label").classList.add("hidden");
+    $("#auth-name").required = false;
     $("#setup-code-label").classList.add("hidden");
     $("#forgot-password").classList.remove("hidden");
     $("#auth-submit").innerHTML = 'Log in <span>↗</span>';
@@ -330,6 +331,7 @@
     $("#auth-submit").innerHTML=signup?'Create account <span>♡</span>':'Log in <span>↗</span>';
     $("#auth-password").autocomplete=signup?"new-password":"current-password";
     $("#auth-name").closest("label").classList.toggle("hidden",!signup);
+    $("#auth-name").required = signup;
     $("#setup-code-label").classList.toggle("hidden",!signup && !needsClaim);
     $("#forgot-password").classList.toggle("hidden",signup);
     setAuthMessage("");
@@ -346,7 +348,7 @@
         if(!name){setAuthMessage("Enter the name for this profile.");return;}
         if(code.length<8){setAuthMessage("Enter the private couple setup code.");return;}
         const status=await getCoupleStatus();
-        if(status.complete){authMode="login";$("#auth-submit").innerHTML='Log in <span>↗</span>';$("#setup-code-label").classList.add("hidden");throw new Error("Both accounts are already set up. New account creation is closed.");}
+        if(status.complete){authMode="login";$("#auth-submit").innerHTML='Log in <span>↗</span>';$("#setup-code-label").classList.add("hidden");$("#auth-name").closest("label").classList.add("hidden");$("#auth-name").required=false;$("#forgot-password").classList.remove("hidden");$("[data-auth-mode]").forEach(x=>x.classList.toggle("active",x.dataset.authMode==="login"));throw new Error("Both accounts are already set up. New account creation is closed.");}
         if((selectedProfile==="her"&&status.her_taken)||(selectedProfile==="him"&&status.him_taken))throw new Error("That profile already has an account. Choose the other profile.");
         const {data,error}=await supabase.auth.signUp({email,password,options:{data:{display_name:name,couple_profile:selectedProfile}}});
         if(error)throw error;
@@ -363,6 +365,7 @@
           authMode = "login";
           $("[data-auth-mode]").forEach(x => x.classList.toggle("active", x.dataset.authMode === "login"));
           $("#auth-name").closest("label").classList.add("hidden");
+          $("#auth-name").required = false;
           $("#setup-code-label").classList.remove("hidden");
           $("#forgot-password").classList.remove("hidden");
           $("#auth-submit").innerHTML = 'Log in <span>↗</span>';
@@ -379,6 +382,7 @@
         authMode = "login";
         $("[data-auth-mode]").forEach(x => x.classList.toggle("active", x.dataset.authMode === "login"));
         $("#auth-name").closest("label").classList.add("hidden");
+        $("#auth-name").required = false;
         $("#setup-code-label").classList.remove("hidden");
         $("#forgot-password").classList.remove("hidden");
         $("#auth-submit").innerHTML = 'Log in <span>↗</span>';
@@ -476,6 +480,7 @@
   });
   async function initialize() {
     $("#auth-name").closest("label").classList.add("hidden");
+    $("#auth-name").required = false;
     $("#setup-code-label").classList.add("hidden");
     $("#forgot-password").classList.remove("hidden");
     if(!isConfigured()){showAuth();return;}
