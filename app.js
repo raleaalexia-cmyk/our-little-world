@@ -127,6 +127,7 @@
     }
     profileRole = await claimAccount(setupCode,role);
     needsClaim = false;
+    $("#auth-setup-code").value = "";
     selectedProfile = profileRole;
     updateRoleTheme();
     await refreshSignupAvailability();
@@ -137,6 +138,7 @@
   async function signOut() {
     if (supabase) await supabase.auth.signOut();
     user = null; profileRole = null; profileName = ""; needsClaim = false;
+    $("#auth-password").value = ""; $("#auth-setup-code").value = "";
     authMode = "login";
     $("[data-auth-mode]").forEach(x => x.classList.toggle("active", x.dataset.authMode === "login"));
     $("#auth-name").closest("label").classList.add("hidden");
@@ -173,6 +175,8 @@
   }
   async function showApp() {
     if (!user || !profileRole) { showAuth(); return; }
+    $("#auth-password").value = "";
+    $("#auth-setup-code").value = "";
     $("#auth-screen").classList.add("hidden");
     $("#app-screen").classList.remove("hidden");
     updateRoleTheme();
@@ -358,6 +362,7 @@
         if(data.session && data.user) {
           user=data.user; profileName=name;
           profileRole=await claimAccount(code,selectedProfile);
+          $("#auth-setup-code").value = "";
           await refreshSignupAvailability();
           selectedProfile=profileRole;
           updateRoleTheme();
