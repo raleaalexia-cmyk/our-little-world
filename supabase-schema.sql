@@ -39,6 +39,18 @@ $$;
 revoke all on function public.is_couple_member() from public, anon;
 grant execute on function public.is_couple_member() to authenticated;
 
+-- Check an item's original owner without exposing the other member's account row.
+-- This also prevents old non-couple rows in a previously used table from leaking into the shared list.
+create or replace function public.is_couple_user(p_user_id uuid)
+returns boolean
+language sql stable security definer
+set search_path = public
+as $
+  select exists (select 1 from public.couple_members where user_id = p_user_id);
+$;
+revoke all on function public.is_couple_user(uuid) from public, anon;
+grant execute on function public.is_couple_user(uuid) to authenticated;
+
 -- Safe status only: this exposes occupied slots, never account emails or the setup-code hash.
 create or replace function public.get_couple_status()
 returns jsonb
@@ -140,13 +152,13 @@ drop policy if exists "Couple members can add to the shared bucket list" on publ
 drop policy if exists "Couple members can update the shared bucket list" on public.bucket_items;
 drop policy if exists "Couple members can delete from the shared bucket list" on public.bucket_items;
 create policy "Couple members can view the shared bucket list" on public.bucket_items
-for select to authenticated using (public.is_couple_member());
+for select to authenticated using (public.is_couple_member() and public.is_couple_user(user_id));
 create policy "Couple members can add to the shared bucket list" on public.bucket_items
 for insert to authenticated with check (public.is_couple_member() and user_id = (select auth.uid()));
 create policy "Couple members can update the shared bucket list" on public.bucket_items
-for update to authenticated using (public.is_couple_member()) with check (public.is_couple_member());
+for update to authenticated using (public.is_couple_member() and public.is_couple_user(user_id)) with check (public.is_couple_member() and public.is_couple_user(user_id));
 create policy "Couple members can delete from the shared bucket list" on public.bucket_items
-for delete to authenticated using (public.is_couple_member());
+for delete to authenticated using (public.is_couple_member() and public.is_couple_user(user_id));
 create index if not exists bucket_items_completed_created_idx on public.bucket_items(completed, created_at);
 
 -- Custom folders and metadata for the private cloud photo album.
