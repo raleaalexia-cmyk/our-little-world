@@ -9,7 +9,7 @@ body.theme-him .hero{background:linear-gradient(110deg,#111522 0%,#101d32 68%,#1
 body.theme-him .sun-disc{background:#438ee8;box-shadow:0 13px 34px #438ee830}
 body.theme-him .spark,body.theme-him .mini-heart,body.theme-him .heading-heart,body.theme-him .eyebrow,body.theme-him .text-button{color:#80baff}
 body.theme-him .btn-primary{background:#438ee8;color:#06101f}
-body.theme-her .profile-pick[data-profile="you"].active{border-color:#ff5ca8}
+body.theme-her .profile-pick[data-profile="her"].active{border-color:#ff5ca8}
 body.theme-him .profile-pick[data-profile="him"].active{border-color:#66aaff}
 .gallery-intro{font-size:11px;color:var(--muted);margin:9px 0 13px}.gallery-controls{display:flex;gap:8px;align-items:center}.gallery-controls select{flex:1;min-width:0;margin:0;padding:9px;font-size:10px}
 .upload-label{display:block;text-align:center;margin:10px 0 5px;padding:10px;border:1px dashed #4b5877;border-radius:9px;background:#0c101b;color:var(--rose-dark);font-size:11px;font-weight:700;cursor:pointer}
@@ -57,3 +57,14 @@ body.theme-him .completed-divider{color:#91c4ff}
 body.theme-him .orbit-b{border-color:#4274a6}
 
 .config-warning a{display:inline-block;margin-top:5px;color:inherit;font-weight:700;text-decoration:underline;text-underline-offset:3px}
+
+.login-choice{display:flex;flex-direction:column;align-items:center;gap:4px;margin:0 0 20px;padding:13px;border:1px solid var(--line);border-radius:12px;background:#0c101b}
+.login-choice-label{font-size:9px;letter-spacing:1.5px;font-weight:700;color:var(--muted)}
+.login-choice strong{font:600 24px "Playfair Display",serif;color:var(--rose)}
+.login-choice>span:last-child{font-size:10px;color:var(--muted)}
+body.theme-him .login-choice strong{color:#91c4ff}
+#auth-form label{margin-bottom:17px}
+#auth-password{font-size:16px;letter-spacing:.05em}
+#auth-submit:disabled{opacity:.55;cursor:not-allowed;transform:none}
+body.theme-her .profile-pick[data-profile="her"].active{border-color:#ff5ca8}
+body.theme-him .profile-pick[data-profile="him"].active{border-color:#66aaff}
