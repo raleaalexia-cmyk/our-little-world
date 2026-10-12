@@ -18,10 +18,10 @@ A responsive couple's bucket list and shared photo album with a pink **her** the
 Create a project at https://supabase.com/ and wait for it to finish provisioning.
 
 ### 2. Configure the one-time setup code in the SQL
-1. Open `supabase-schema.sql` in this repository.
-2. Replace the exact text `REPLACE_WITH_A_PRIVATE_CODE_YOU_CHOOSE` with a strong, unique private code (at least 24 random characters is recommended). Do not use an example or a code you share publicly.
-3. Open the Supabase SQL Editor, paste the updated entire script, and run it.
-4. Keep the code private. Enter it in the website only when registering the her and him accounts. The database stores a bcrypt hash, not the plain code.
+1. Open `supabase-schema.sql` in this repository and copy its contents.
+2. In the **Supabase SQL Editor only**, replace the placeholder inside the single-quoted value on the `insert into public.couple_settings` line with a strong, unique private code (at least 24 random characters is recommended). Leave the explanatory comment unchanged.
+3. Run the SQL in Supabase. Do **not** save or commit your chosen code in this public GitHub repository.
+4. Keep the code private. Enter it in the website only while registering the her and him accounts. The database stores a bcrypt hash, not the plain code.
 
 The SQL script sets up the two membership slots, security policies, shared bucket-list database, private photo metadata, and a private Storage bucket. If you already ran an older version of the starter SQL, run this updated script after replacing the setup-code placeholder.
 
