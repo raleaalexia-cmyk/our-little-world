@@ -349,14 +349,30 @@
           await showApp();
           toast("Your account is ready ♡");
         } else {
+          needsClaim = true;
+          authMode = "login";
+          $("[data-auth-mode]").forEach(x => x.classList.toggle("active", x.dataset.authMode === "login"));
+          $("#auth-name").closest("label").classList.add("hidden");
           $("#setup-code-label").classList.remove("hidden");
-          setAuthMessage("Check your email to confirm your account. Then choose Log in and use the same profile and private setup code to finish setup.",true);
+          $("#forgot-password").classList.remove("hidden");
+          $("#auth-submit").innerHTML = 'Log in <span>↗</span>';
+          $("#auth-password").autocomplete = "current-password";
+          setAuthMessage("Check your email to confirm your account. Then log in with the same profile and private setup code to finish setup.",true);
         }
       } else {
         await loginUser(email,password,code);
       }
     } catch(err) {
       console.error(err);
+      if (user && !profileRole && authMode === "signup") {
+        needsClaim = true;
+        authMode = "login";
+        $("[data-auth-mode]").forEach(x => x.classList.toggle("active", x.dataset.authMode === "login"));
+        $("#auth-name").closest("label").classList.add("hidden");
+        $("#setup-code-label").classList.remove("hidden");
+        $("#forgot-password").classList.remove("hidden");
+        $("#auth-submit").innerHTML = 'Log in <span>↗</span>';
+      }
       setAuthMessage(err.message || "Unable to complete sign-in.");
     } finally {
       $("#auth-submit").disabled=false;
