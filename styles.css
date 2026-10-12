@@ -45,3 +45,13 @@ body.theme-him .note-icon{background:#172b49;color:#91c4ff}
 body.theme-him .upload-label{color:#91c4ff;border-color:#34567e}
 body.theme-him .photo-actions button{color:#91c4ff}
 body.theme-him .auth-foot span{color:#91c4ff}
+
+@media(max-width:680px){.prompt-card{grid-column:1/-1}}
+body.theme-him .date-card h3 em,body.theme-him .scribble-heart{color:#91c4ff}
+body.theme-him .hero-meta .date-dot{background:#66aaff}
+body.theme-her .hero-meta .date-dot{background:#ff5ca8}
+body.theme-him .profile-pick.active{background:linear-gradient(145deg,#142944,#111a2d);box-shadow:0 0 0 1px #66aaff2b}
+body.theme-her .profile-pick.active{background:linear-gradient(145deg,#25182e,#111a2d);box-shadow:0 0 0 1px #ff5ca822}
+body.theme-him .check-button{border-color:#6988ac}
+body.theme-him .completed-divider{color:#91c4ff}
+body.theme-him .orbit-b{border-color:#4274a6}
