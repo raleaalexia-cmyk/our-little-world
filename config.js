@@ -1,7 +1,8 @@
-// Add your Supabase project values here (Project Settings → API).
-// Do not put a service_role key here. The anon/publishable key is intended for browser use
-// when Row Level Security is configured correctly.
+// Public frontend configuration. Emails identify the two pre-created Supabase Auth users.
+// Never put either password or a service_role key in this file.
 window.APP_CONFIG = {
   supabaseUrl: "YOUR_SUPABASE_PROJECT_URL",
-  supabaseAnonKey: "YOUR_SUPABASE_ANON_KEY"
+  supabaseAnonKey: "YOUR_SUPABASE_PUBLISHABLE_OR_ANON_KEY",
+  alexiaEmail: "ALEXIA_AUTH_EMAIL",
+  dyanEmail: "DYAN_AUTH_EMAIL"
 };
