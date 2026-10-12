@@ -21,13 +21,14 @@ In Supabase, open **Authentication → Users → Add user**:
 1. Create Alexia's user using her real email address and a strong private password. Mark/confirm the email as confirmed if you want password login to work immediately.
 2. Create Dyan's user using his real email address and a different strong private password. Confirm the email too.
 3. Do not use the public website to create accounts; it intentionally has no sign-up function.
+4. After adding the two users, open **Authentication → Settings** and turn off public/new-user sign-ups if that setting is available in your Supabase project. The app and row-level security already deny access to unassigned users, but turning sign-ups off also prevents extra Auth users from being created through the public auth endpoint.
 
-The passwords previously typed in a chat should be treated as exposed. Set fresh passwords privately in Supabase, and never enter them into GitHub or this file.
+The passwords previously typed in this conversation should be treated as exposed. Set fresh passwords privately in Supabase, and never enter them into GitHub or this file.
 
 ### 3. Assign the only two app profiles
 1. Open `supabase-schema.sql` in this repository and copy its full contents.
 2. In the **Supabase SQL Editor only**, replace `ALEXIA_EMAIL_REPLACE_THIS` and `DYAN_EMAIL_REPLACE_THIS` in the two membership insert statements with the exact email addresses used for the two Supabase Auth users.
-3. Run the SQL script. It creates row-level security policies, the two approved membership roles, the shared bucket list, private photo storage and live-sync publication. Do not commit actual emails or credentials into the SQL file in this public repository.
+3. Run the SQL script. It creates row-level security policies, assigns the two approved membership roles, sets up the shared bucket list, private photo storage and live-sync publication. Do not commit actual emails or credentials into the SQL file in this public repository.
 4. If you previously tested the old sign-up version and the SQL reports that a profile is already assigned to another user, inspect `public.couple_members` in the SQL Editor and remove only the obsolete test membership before running the two insert statements again. Do not delete either Auth user.
 
 ### 4. Connect the website to Supabase
