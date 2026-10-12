@@ -492,6 +492,7 @@
       if(event==="SIGNED_OUT"){user=null;profileRole=null;showAuth();}
       if(event==="PASSWORD_RECOVERY"){$("#password-dialog").showModal();}
     });
+    if (window.location.hash.includes("type=recovery")) $("#password-dialog").showModal();
   }
   initialize();
 })();
