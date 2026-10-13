@@ -105,3 +105,16 @@ body.theme-him .profile-pick[data-profile="him"].active{border-color:#66aaff}
   .logout-top{padding:7px 8px}
   .avatar{width:31px;height:31px}
 }
+
+
+/* Place/activity labels and filters for the imported bucket list. */
+.kind-filters{display:flex;gap:7px;flex-wrap:wrap;margin:-7px 0 19px}
+.kind-filter{background:transparent;border:1px solid #303951;border-radius:99px;padding:7px 11px;color:#a8b0c5;font-size:10px}
+.kind-filter.active{background:#252c40;border-color:#566380;color:var(--ink)}
+.kind-tag{font-weight:700;letter-spacing:.1px}
+.kind-tag.kind-place{background:#172a48;color:#9bcaff}
+.kind-tag.kind-activity{background:#35192f;color:#ff9bcb}
+body.theme-her .kind-filter.active{background:#35192f;border-color:#633052;color:#ff83bc}
+body.theme-him .kind-filter.active{background:#172b49;border-color:#2e5885;color:#91c4ff}
+body.theme-him .kind-tag.kind-activity{background:#172b49;color:#91c4ff}
+body.theme-him .kind-tag.kind-place{background:#1b2d44;color:#a8cbff}
