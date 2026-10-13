@@ -304,14 +304,17 @@
     updateRoleTheme();
     setAuthMessage("");
   }));
-  $("#auth-form").addEventListener("submit", async e => {
-    e.preventDefault();
+  async function handleLogin() {
     if (!isConfigured()) {
       setAuthMessage("Secure login is not connected yet. Follow the setup guide to connect the two existing accounts.", true);
       return;
     }
     const password = $("#auth-password").value;
-    if (!password) { setAuthMessage("Enter your password."); return; }
+    if (!password) {
+      setAuthMessage("Enter your password.");
+      $("#auth-password").focus();
+      return;
+    }
     setAuthMessage("");
     try {
       await loginUser(password);
@@ -320,8 +323,15 @@
       setAuthMessage(err.message || "Unable to log in. Check your password and connection.");
       $("#auth-password").value = "";
       $("#auth-password").focus();
-    } finally {
     }
+  }
+  $("#auth-submit").addEventListener("click", (event) => {
+    event.preventDefault();
+    handleLogin();
+  });
+  $("#auth-form").addEventListener("submit", (event) => {
+    event.preventDefault();
+    handleLogin();
   });
   function openAdd() {
     $("#add-form").reset(); delete $("#add-form").dataset.editId;
