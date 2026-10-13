@@ -2,7 +2,7 @@
   "use strict";
   const $ = (selector) => document.querySelector(selector);
   const $$ = (selector) => [...document.querySelectorAll(selector)];
-  const STORAGE_KEY = "our-little-world.bucket-list.v2";
+  const STORAGE_KEY = "our-little-world.bucket-list.v3-luxembourgish";
   const categoryNames = {date:"Date idea",travel:"Place to go",food:"Food & drink",adventure:"Adventure",little:"Little thing"};
   const prompts = [
     "Make a playlist for a drive with nowhere in particular to go.",
@@ -14,45 +14,45 @@
     "Write down three things you want to do together this year.",
     "Go for a walk and take turns choosing every next turn."
   ];
-  const starterItems = [
-    {title:"kletter park",category:"adventure",priority:"someday"},
-    {title:"streichel zoo Deutschland",category:"travel",priority:"someday"},
-    {title:"lapland",category:"travel",priority:"someday"},
-    {title:"hormoz rout sand iran",category:"travel",priority:"someday"},
-    {title:"tauchen",category:"adventure",priority:"someday"},
-    {title:"feschen",category:"adventure",priority:"someday"},
-    {title:"stausei",category:"travel",priority:"someday"},
-    {title:"camping",category:"adventure",priority:"someday"},
-    {title:"klotteren besch",category:"adventure",priority:"someday"},
-    {title:"wanderen",category:"adventure",priority:"someday"},
-    {title:"töpferen",category:"little",priority:"someday"},
-    {title:"spielabend",category:"date",priority:"someday"},
-    {title:"Rageroom",category:"adventure",priority:"someday"},
-    {title:"schwemm calypso",category:"adventure",priority:"someday"},
-    {title:"brasillieneschen volleyball",category:"adventure",priority:"someday"},
-    {title:"yoga",category:"adventure",priority:"someday"},
-    {title:"super mario nintendo japan",category:"adventure",priority:"someday"},
-    {title:"nordkapp",category:"travel",priority:"someday"},
-    {title:"paddel",category:"adventure",priority:"someday"},
-    {title:"lodalen",category:"travel",priority:"someday"},
-    {title:"nuuk greenland",category:"travel",priority:"someday"},
-    {title:"Mount Fuji",category:"travel",priority:"someday"},
-    {title:"restaurant meeres früchten iessen",category:"food",priority:"someday"},
-    {title:"picknick",category:"date",priority:"someday"},
-    {title:"volleyball spillen",category:"adventure",priority:"someday",completed:true},
-    {title:"mottorat fueren zesummen",category:"adventure",priority:"someday",completed:true},
-    {title:"sauna",category:"date",priority:"someday",completed:true},
-    {title:"molen owend",category:"date",priority:"someday",completed:true},
-    {title:"Bowl painting",category:"date",priority:"someday",completed:true},
-    {title:"Deirepark esch",category:"travel",priority:"someday",completed:true},
-    {title:"ramen gelle fra",category:"food",priority:"someday",completed:true}
-  ].map((item, index) => ({
+  // Imported from the bucket-list screenshots. kind separates destinations from activities.
+  const bucketListItems = [
+    {title:"Klotterpark",kind:"activity",category:"adventure",priority:"someday"},
+    {title:"Streichelzoo an Däitschland",kind:"place",category:"travel",priority:"someday"},
+    {title:"Lappland",kind:"place",category:"travel",priority:"someday"},
+    {title:"Roude Sand op Hormuz, Iran",kind:"place",category:"travel",priority:"someday"},
+    {title:"Tauchen",kind:"activity",category:"adventure",priority:"someday"},
+    {title:"Fëschen",kind:"activity",category:"little",priority:"someday"},
+    {title:"Stauséi",kind:"place",category:"travel",priority:"someday"},
+    {title:"Camping",kind:"activity",category:"adventure",priority:"someday"},
+    {title:"Kloteren am Bësch",kind:"activity",category:"adventure",priority:"someday"},
+    {title:"Wanderen",kind:"activity",category:"adventure",priority:"someday"},
+    {title:"Töpferen",kind:"activity",category:"little",priority:"someday"},
+    {title:"Spillowend",kind:"activity",category:"date",priority:"someday"},
+    {title:"Rage Room",kind:"activity",category:"adventure",priority:"someday"},
+    {title:"Schwämm Calypso",kind:"place",category:"travel",priority:"someday"},
+    {title:"Brasilianesche Volleyball",kind:"activity",category:"adventure",priority:"someday"},
+    {title:"Yoga",kind:"activity",category:"little",priority:"someday"},
+    {title:"Super Mario / Nintendo a Japan",kind:"place",category:"travel",priority:"someday"},
+    {title:"Nordkapp",kind:"place",category:"travel",priority:"someday"},
+    {title:"Padel spillen",kind:"activity",category:"adventure",priority:"someday"},
+    {title:"Lodalen",kind:"place",category:"travel",priority:"someday"},
+    {title:"Nuuk, Grönland",kind:"place",category:"travel",priority:"someday"},
+    {title:"Mount Fuji",kind:"place",category:"travel",priority:"someday"},
+    {title:"Mieresfriichten an engem Restaurant iessen",kind:"activity",category:"food",priority:"someday"},
+    {title:"Picknick",kind:"activity",category:"date",priority:"someday"},
+    {title:"Volleyball spillen",kind:"activity",category:"adventure",priority:"someday",completed:true},
+    {title:"Zesumme mam Motorrad fueren",kind:"activity",category:"adventure",priority:"someday",completed:true},
+    {title:"Sauna",kind:"activity",category:"little",priority:"someday",completed:true},
+    {title:"Molenowend",kind:"activity",category:"date",priority:"someday",completed:true},
+    {title:"Schossel bemolen (Bowl painting)",kind:"activity",category:"little",priority:"someday",completed:true},
+    {title:"Déierepark Esch",kind:"place",category:"travel",priority:"someday",completed:true},
+    {title:"Ramen bei der Gëlle Fra iessen",kind:"activity",category:"food",priority:"someday",completed:true}
+  ].map((item,index) => ({
     ...item,
-    id:"screenshot-"+(index+1),
+    id:"couple-list-"+(index+1),
     description:"",
     dream_date:"",
-    completed:!!item.completed,
-    completed_at:item.completed ? new Date(Date.now()+index).toISOString() : "",
+    completed_at:item.completed ? new Date().toISOString() : "",
     created_at:new Date(Date.now()+index).toISOString()
   }));
 
@@ -61,6 +61,7 @@
   let items = loadItems();
   let filter = "all";
   let categoryFilter = "all";
+  let kindFilter = "all";
   let query = "";
   let editingId = null;
 
@@ -72,7 +73,7 @@
         if (Array.isArray(parsed)) return parsed;
       }
     } catch (_) {}
-    const initialItems = starterItems.map(item => ({...item}));
+    const initialItems = bucketListItems.map(item => ({...item}));
     try { localStorage.setItem(STORAGE_KEY, JSON.stringify(initialItems)); } catch (_) {}
     return initialItems;
   }
@@ -190,6 +191,7 @@
       if (filter === "active" && item.completed) return false;
       if (filter === "completed" && !item.completed) return false;
       if (categoryFilter !== "all" && item.category !== categoryFilter) return false;
+      if (kindFilter !== "all" && (item.kind || "activity") !== kindFilter) return false;
       const text = (String(item.title || "") + " " + String(item.description || "")).toLowerCase();
       return text.includes(query.toLowerCase());
     });
@@ -210,12 +212,15 @@
       const priorityLabel = {must:"Must do ♡",soon:"Soon-ish",someday:"Someday"}[item.priority] || "Someday";
       const doneTag = item.completed ? '<span class="tag done">Done ♡</span>' : "";
       const dateTag = item.dream_date ? '<span class="item-date">' + safe(prettyDate(item.dream_date)) + '</span>' : "";
+      const kind = item.kind === "place" ? "place" : "activity";
+      const kindLabel = kind === "place" ? "Place" : "Thing to do";
       out.push(
         '<article class="bucket-item ' + (item.completed ? "is-complete" : "") + '" data-id="' + safe(item.id) + '">' +
           '<button class="check-button" type="button" data-action="toggle" aria-label="' + (item.completed ? "Mark not done" : "Mark done") + '">' + (item.completed ? "✓" : "") + '</button>' +
           '<div class="item-main"><div class="item-title">' + safe(item.title) + '</div>' +
           (item.description ? '<div class="item-description">' + safe(item.description) + '</div>' : '') +
-          '<div class="item-meta"><span class="tag">' + safe(categoryNames[item.category] || "Little thing") + '</span>' +
+          '<div class="item-meta"><span class="tag kind-tag kind-' + kind + '">' + kindLabel + '</span>' +
+          '<span class="tag">' + safe(categoryNames[item.category] || "Little thing") + '</span>' +
           '<span class="tag ' + safe(item.priority || "someday") + '">' + safe(priorityLabel) + '</span>' + doneTag + dateTag + '</div></div>' +
           '<div class="item-actions"><button class="icon-button" type="button" data-action="edit" aria-label="Edit dream" title="Edit">✎</button>' +
           '<button class="icon-button" type="button" data-action="delete" aria-label="Delete dream" title="Delete">×</button></div>' +
@@ -236,10 +241,17 @@
     $$(".chip").forEach(button => button.classList.toggle("active", button.dataset.category === categoryFilter));
     renderItems();
   }
+  function setKind(value) {
+    kindFilter = value;
+    $$(".kind-filter").forEach(button => button.classList.toggle("active", button.dataset.kind === kindFilter));
+    renderItems();
+  }
+
   function openAddDialog(item = null) {
     editingId = item ? item.id : null;
     $("#add-error").textContent = "";
     $("#item-title").value = item ? item.title : "";
+    $("#item-kind").value = item ? (item.kind || "activity") : "activity";
     $("#item-description").value = item ? (item.description || "") : "";
     $("#item-category").value = item ? (item.category || "little") : "date";
     $("#item-priority").value = item ? (item.priority || "someday") : "someday";
@@ -260,6 +272,7 @@
     const next = {
       id: editingId || ("dream-" + Date.now() + "-" + Math.random().toString(36).slice(2,7)),
       title:title.slice(0,120),
+      kind:$("#item-kind").value === "place" ? "place" : "activity",
       description:$("#item-description").value.trim().slice(0,400),
       category:$("#item-category").value,
       priority:$("#item-priority").value,
@@ -326,7 +339,8 @@
     renderItems();
   });
   $$(".filter").forEach(button => button.addEventListener("click", () => setFilter(button.dataset.filter)));
-  $$(".chip").forEach(button => button.addEventListener("click", () => setCategory(button.dataset.category)));
+  $(".chip").forEach(button => button.addEventListener("click", () => setCategory(button.dataset.category)));
+  $(".kind-filter").forEach(button => button.addEventListener("click", () => setKind(button.dataset.kind)));
   $("#new-prompt").addEventListener("click", () => {
     const current = $("#prompt-text").textContent;
     const choices = prompts.filter(prompt => prompt !== current);
