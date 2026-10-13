@@ -2,10 +2,26 @@
   const $ = (s) => document.querySelector(s);
   const $$ = (s) => [...document.querySelectorAll(s)];
   const config = window.APP_CONFIG || {};
-  const configured = !!(config.supabaseUrl && config.supabaseAnonKey && config.alexiaEmail && config.dyanEmail &&
-    !config.supabaseUrl.includes("YOUR_") && !config.supabaseAnonKey.includes("YOUR_") &&
-    !config.alexiaEmail.includes("_AUTH_EMAIL") && !config.dyanEmail.includes("_AUTH_EMAIL"));
-  const supabase = configured && window.supabase ? window.supabase.createClient(config.supabaseUrl, config.supabaseAnonKey) : null;
+  const AppwriteSDK = window.Appwrite || null;
+  const configured = !!(
+    AppwriteSDK && config.endpoint && config.projectId && config.databaseId &&
+    config.tableId && config.bucketId && config.alexiaEmail && config.dyanEmail &&
+    !String(config.endpoint).includes("YOUR_") &&
+    !String(config.projectId).includes("YOUR_") &&
+    !String(config.databaseId).includes("YOUR_") &&
+    !String(config.tableId).includes("YOUR_") &&
+    !String(config.bucketId).includes("YOUR_") &&
+    !String(config.alexiaEmail).includes("_EMAIL") &&
+    !String(config.dyanEmail).includes("_EMAIL")
+  );
+  let client = null, account = null, tablesDB = null, storage = null, realtime = null;
+  if (configured) {
+    client = new AppwriteSDK.Client().setEndpoint(config.endpoint).setProject(config.projectId);
+    account = new AppwriteSDK.Account(client);
+    tablesDB = new AppwriteSDK.TablesDB(client);
+    storage = new AppwriteSDK.Storage(client);
+    realtime = new AppwriteSDK.Realtime(client);
+  }
   const categoryNames = {date:"Date idea",travel:"Place to go",food:"Food & drink",adventure:"Adventure",little:"Little thing"};
   const defaultFolders = ["Us","Trips","Date nights","Everyday"];
   const prompts = [
@@ -34,7 +50,7 @@
     const d = new Date(value + "T12:00:00");
     return d.toLocaleDateString(undefined,{month:"short",day:"numeric",year:d.getFullYear()!==new Date().getFullYear()?"numeric":undefined});
   };
-  const isConfigured = () => !!(supabase && configured);
+  const isConfigured = () => !!(configured && account && tablesDB && storage);
   function setAuthMessage(text, warning = false) {
     $("#auth-message").textContent = text || "";
     $("#auth-message").classList.toggle("warning-message", warning);
@@ -53,41 +69,48 @@
     $("#auth-screen").classList.remove("hidden");
     $("#app-screen").classList.add("hidden");
     $("#configuration-warning").classList.toggle("hidden", isConfigured());
-    if (!isConfigured()) setAuthMessage("Secure login is not connected. Add the Supabase URL, public key, and both account emails in config.js.", true);
-    else setAuthMessage("");
+    if (!isConfigured()) {
+      setAuthMessage("The secure account service is not connected yet. Follow the short Appwrite setup guide below.", true);
+    } else {
+      setAuthMessage("");
+    }
     updateRoleTheme();
   }
-  async function checkMembership() {
-    const {data,error} = await supabase.rpc("get_my_couple_profile");
-    if (error) throw error;
-    return data === "her" || data === "him" ? data : null;
+  function profileForEmail(email) {
+    const normalized = String(email || "").trim().toLowerCase();
+    if (normalized && normalized === String(config.alexiaEmail || "").trim().toLowerCase()) return "her";
+    if (normalized && normalized === String(config.dyanEmail || "").trim().toLowerCase()) return "him";
+    return null;
   }
   async function loginUser(password) {
-    const email = selectedProfile === "him" ? config.dyanEmail.trim() : config.alexiaEmail.trim();
+    if (!isConfigured()) throw new Error("Appwrite isn't connected yet. Complete the one-time project setup first.");
+    const email = selectedProfile === "him" ? String(config.dyanEmail).trim() : String(config.alexiaEmail).trim();
     if (!email || !password) throw new Error("Enter the password for the selected profile.");
-    const {data,error} = await supabase.auth.signInWithPassword({email,password});
-    if (error) throw new Error("That password didn't work for this profile. Check the selected profile and try again.");
-    user = data.user;
-    let role = null;
     try {
-      role = await checkMembership();
-    } catch (membershipError) {
-      await supabase.auth.signOut();
-      user = null; profileRole = null;
-      throw new Error("The database setup is incomplete. Ask the site owner to run supabase-schema.sql and connect the two account emails.");
+      await account.createEmailPasswordSession({email, password});
+      user = await account.get();
+    } catch (err) {
+      throw new Error("That password didn't work for this profile. Check the selected name and try again.");
     }
-    if (role !== selectedProfile) {
-      await supabase.auth.signOut();
-      user = null; profileRole = null;
-      throw new Error("This login is not assigned to that profile. Ask the site owner to check the two private account assignments.");
+    const role = profileForEmail(user.email);
+    if (!role || role !== selectedProfile) {
+      try { await account.deleteSession({sessionId:"current"}); } catch (_) {}
+      user = null;
+      profileRole = null;
+      throw new Error("This account is not assigned to the selected profile.");
     }
     profileRole = role;
     updateRoleTheme();
     await showApp();
   }
   async function signOut() {
-    if (realtimeChannel && supabase) { try { await supabase.removeChannel(realtimeChannel); } catch (_) {} realtimeChannel = null; }
-    if (supabase) await supabase.auth.signOut();
+    if (typeof realtimeSubscription === "function") {
+      try { realtimeSubscription(); } catch (_) {}
+      realtimeSubscription = null;
+    }
+    if (account) {
+      try { await account.deleteSession({sessionId:"current"}); } catch (_) {}
+    }
     user = null; profileRole = null; items = []; photos = [];
     $("#auth-password").value = "";
     selectedProfile = "her";
@@ -95,58 +118,73 @@
     showAuth();
   }
   async function loadItems() {
-    const {data,error} = await supabase.from("bucket_items").select("*").order("completed",{ascending:true}).order("created_at",{ascending:true});
-    if (error) throw error;
-    items = data || [];
+    const result = await tablesDB.listRows({
+      databaseId: config.databaseId,
+      tableId: config.tableId,
+      queries: [
+        AppwriteSDK.Query.equal("type", "bucket"),
+        AppwriteSDK.Query.limit(500)
+      ]
+    });
+    items = (result.rows || []).map(row => ({...row,id:row.$id}));
+    items.sort((a,b) => Number(!!a.completed)-Number(!!b.completed) ||
+      String(a.created_at||"").localeCompare(String(b.created_at||"")));
   }
   async function saveItem(item) {
     const payload = {
-      title:item.title, description:item.description||"", category:item.category||"little",
-      priority:item.priority||"someday", dream_date:item.dream_date||null, completed:!!item.completed,
-      completed_at:item.completed_at||null
+      type:"bucket",
+      title:String(item.title||"").slice(0,120),
+      description:String(item.description||"").slice(0,400),
+      category:item.category||"little",
+      priority:item.priority||"someday",
+      dream_date:item.dream_date||"",
+      completed:!!item.completed,
+      completed_at:item.completed_at||"",
+      created_at:item.created_at||new Date().toISOString(),
+      uploaded_by:user.$id,
+      folder:"",
+      name:"",
+      storage_path:""
     };
     if (item.id && !String(item.id).startsWith("demo-")) {
-      const {data,error} = await supabase.from("bucket_items").update(payload).eq("id",item.id).select().single();
-      if (error) throw error;
-      return data;
+      const {id, ...data} = payload;
+      const row = await tablesDB.updateRow({
+        databaseId:config.databaseId, tableId:config.tableId, rowId:item.id, data
+      });
+      return {...row,id:row.$id};
     }
-    payload.user_id = user.id;
-    const {data,error} = await supabase.from("bucket_items").insert(payload).select().single();
-    if (error) throw error;
-    return data;
+    const row = await tablesDB.createRow({
+      databaseId:config.databaseId, tableId:config.tableId,
+      rowId:AppwriteSDK.ID.unique(), data:payload
+    });
+    return {...row,id:row.$id};
   }
   async function deleteItem(item) {
-    const {error} = await supabase.from("bucket_items").delete().eq("id",item.id);
-    if (error) throw error;
+    await tablesDB.deleteRow({
+      databaseId:config.databaseId, tableId:config.tableId, rowId:item.id
+    });
   }
+  let realtimeSubscription = null;
   async function connectRealtime() {
-    if (!supabase || !profileRole) return;
-    if (realtimeChannel) {
-      try { await supabase.removeChannel(realtimeChannel); } catch (_) {}
-      realtimeChannel = null;
+    if (!realtime || !profileRole) return;
+    if (typeof realtimeSubscription === "function") {
+      try { realtimeSubscription(); } catch (_) {}
     }
-    realtimeChannel = supabase.channel("our-little-world-shared")
-      .on("postgres_changes", {event:"*",schema:"public",table:"bucket_items"}, async () => {
+    realtimeSubscription = realtime.subscribe(
+      `tablesdb.${config.databaseId}.tables.${config.tableId}.rows`,
+      async () => {
         if (!user || !profileRole) return;
-        try { await loadItems(); renderItems(); } catch (e) { console.error("Bucket-list refresh failed",e); }
-      })
-      .on("postgres_changes", {event:"*",schema:"public",table:"couple_photos"}, async () => {
-        if (!user || !profileRole) return;
-        try { await loadCloudPhotos(); } catch (e) { console.error("Photo refresh failed",e); }
-      })
-      .on("postgres_changes", {event:"*",schema:"public",table:"couple_photo_folders"}, async () => {
-        if (!user || !profileRole) return;
-        try { await loadCloudFolders(); renderPhotos(); } catch (e) { console.error("Folder refresh failed",e); }
-      })
-      .subscribe(status => {
-        const badge = $("#sync-status");
-        if (!badge) return;
-        if (status === "SUBSCRIBED") badge.textContent = "● Shared and live";
-        else if (status === "CHANNEL_ERROR" || status === "TIMED_OUT") badge.textContent = "● Sync reconnecting";
-      });
+        try {
+          await loadItems(); renderItems();
+          await loadCloudFolders();
+          await loadCloudPhotos();
+        } catch (e) { console.error("Shared content refresh failed",e); }
+      }
+    );
+    $("#sync-status").textContent = "● Shared and live";
   }
   async function showApp() {
-    if (!user || !profileRole || profileRole !== selectedProfile) { showAuth(); return; }
+    if (!user || !profileRole || profileForEmail(user.email) !== profileRole) { showAuth(); return; }
     $("#auth-password").value = "";
     $("#auth-screen").classList.add("hidden");
     $("#app-screen").classList.remove("hidden");
@@ -162,7 +200,7 @@
       await loadCloudPhotos();
       await connectRealtime();
     } catch (e) {
-      console.error(e); toast("Couldn't load shared content. Check the Supabase setup and policies.");
+      console.error(e); toast("Couldn't load shared content. Check Appwrite permissions and the setup values.");
     }
   }
   function renderItems() {
@@ -232,9 +270,12 @@
 
   // Cloud photo album: private Storage bucket + metadata tables, shared by the two verified members.
   async function loadCloudFolders() {
-    const {data,error} = await supabase.from("couple_photo_folders").select("name").order("name");
-    if (error) throw error;
-    photoFolders = [...defaultFolders,...(data||[]).map(x=>x.name).filter(n=>!defaultFolders.includes(n))];
+    const result = await tablesDB.listRows({
+      databaseId:config.databaseId, tableId:config.tableId,
+      queries:[AppwriteSDK.Query.equal("type","folder"),AppwriteSDK.Query.limit(100)]
+    });
+    const custom=(result.rows||[]).map(row=>String(row.name||"").trim()).filter(Boolean);
+    photoFolders=[...defaultFolders,...custom.filter(n=>!defaultFolders.includes(n))];
     renderPhotoFolderOptions();
   }
   function renderPhotoFolderOptions() {
@@ -244,14 +285,18 @@
     select.value=photoFolder;
   }
   async function loadCloudPhotos() {
-    const {data,error} = await supabase.from("couple_photos").select("*").order("created_at",{ascending:false});
-    if (error) throw error;
-    const rows=data||[];
-    const signed=await Promise.all(rows.map(async p=>{
-      const {data:link,error:linkError}=await supabase.storage.from("couple-photos").createSignedUrl(p.storage_path,3600);
-      return {...p,signedUrl:linkError?null:link?.signedUrl};
+    const result = await tablesDB.listRows({
+      databaseId:config.databaseId, tableId:config.tableId,
+      queries:[AppwriteSDK.Query.equal("type","photo"),AppwriteSDK.Query.limit(500)]
+    });
+    photos=await Promise.all((result.rows||[]).map(async row=>{
+      let signedUrl=null;
+      try {
+        signedUrl=String(storage.getFileView({bucketId:config.bucketId,fileId:row.storage_path}));
+      } catch (_) {}
+      return {...row,id:row.$id,signedUrl};
     }));
-    photos=signed;
+    photos.sort((a,b)=>String(b.created_at||"").localeCompare(String(a.created_at||"")));
     renderPhotos();
   }
   function renderPhotos() {
@@ -271,32 +316,40 @@
     });
   }
   async function createPhotoFolder(name) {
-    const trimmed=name.trim();
+    const trimmed=String(name||"").trim();
     if (!trimmed || trimmed.length>32) return;
     if (photoFolders.some(f=>f.toLowerCase()===trimmed.toLowerCase())) throw new Error("That folder already exists.");
-    const {error}=await supabase.from("couple_photo_folders").insert({name:trimmed,created_by:user.id});
-    if (error) throw error;
+    await tablesDB.createRow({
+      databaseId:config.databaseId,tableId:config.tableId,rowId:AppwriteSDK.ID.unique(),
+      data:{type:"folder",name:trimmed,folder:trimmed,title:"",description:"",category:"",priority:"",dream_date:"",completed:false,completed_at:"",created_at:new Date().toISOString(),storage_path:"",uploaded_by:user.$id}
+    });
     await loadCloudFolders(); photoFolder=trimmed; renderPhotos();
   }
   async function uploadPhoto(file) {
     if (!file.type.startsWith("image/")) throw new Error(file.name+" is not an image.");
     if (file.size>15*1024*1024) throw new Error(file.name+" is larger than 15 MB.");
-    const cleanName=file.name.replace(/[^a-zA-Z0-9._-]/g,"_").slice(-100) || "photo";
-    const path=user.id+"/"+(crypto.randomUUID?crypto.randomUUID():String(Date.now()))+"-"+cleanName;
-    const {error:uploadError}=await supabase.storage.from("couple-photos").upload(path,file,{cacheControl:"3600",upsert:false,contentType:file.type});
-    if (uploadError) throw uploadError;
-    const {error:rowError}=await supabase.from("couple_photos").insert({storage_path:path,name:file.name,folder:photoFolder,uploaded_by:user.id});
-    if (rowError) {
-      await supabase.storage.from("couple-photos").remove([path]);
-      throw rowError;
+    const fileResult=await storage.createFile({bucketId:config.bucketId,fileId:AppwriteSDK.ID.unique(),file});
+    try {
+      await tablesDB.createRow({
+        databaseId:config.databaseId,tableId:config.tableId,rowId:AppwriteSDK.ID.unique(),
+        data:{type:"photo",name:file.name,folder:photoFolder,storage_path:fileResult.$id,uploaded_by:user.$id,created_at:new Date().toISOString(),title:"",description:"",category:"",priority:"",dream_date:"",completed:false,completed_at:""}
+      });
+    } catch (err) {
+      try { await storage.deleteFile({bucketId:config.bucketId,fileId:fileResult.$id}); } catch (_) {}
+      throw err;
     }
   }
   async function downloadPhoto(photo) {
-    const {data,error}=await supabase.storage.from("couple-photos").download(photo.storage_path);
-    if (error) throw error;
-    const url=URL.createObjectURL(data),a=document.createElement("a");
-    a.href=url; a.download=photo.name||"our-little-world-photo"; document.body.appendChild(a); a.click(); a.remove();
-    setTimeout(()=>URL.revokeObjectURL(url),1500);
+    const url=String(storage.getFileDownload({bucketId:config.bucketId,fileId:photo.storage_path}));
+    const a=document.createElement("a");
+    a.href=url; a.download=photo.name||"our-little-world-photo"; a.target="_blank"; a.rel="noopener";
+    document.body.appendChild(a); a.click(); a.remove();
+  }
+  async function deletePhoto(photo) {
+    await tablesDB.deleteRow({databaseId:config.databaseId,tableId:config.tableId,rowId:photo.id});
+    try { await storage.deleteFile({bucketId:config.bucketId,fileId:photo.storage_path}); }
+    catch (err) { console.warn("Deleted photo metadata; storage cleanup failed",err); }
+    photos=photos.filter(p=>p.id!==photo.id); renderPhotos();
   }
 
   $$(".profile-pick").forEach(btn => btn.addEventListener("click", () => {
@@ -379,15 +432,11 @@
     const btn=e.target.closest("button[data-photo-action]");if(!btn)return;
     const photo=photos.find(p=>p.id===btn.dataset.photoId);if(!photo)return;
     try {
-      if(btn.dataset.photoAction==="download")await downloadPhoto(photo);
+      if(btn.dataset.photoAction==="download") await downloadPhoto(photo);
       else if(confirm("Delete this photo from the shared album for both accounts?")) {
-        const {error}=await supabase.from("couple_photos").delete().eq("id",photo.id);
-        if(error)throw error;
-        const {error:storageError}=await supabase.storage.from("couple-photos").remove([photo.storage_path]);
-        if(storageError)console.warn(storageError);
-        photos=photos.filter(p=>p.id!==photo.id);renderPhotos();toast("Photo deleted");
+        await deletePhoto(photo); toast("Photo deleted");
       }
-    } catch(err){console.error(err);toast(err.message||"Photo action failed.");}
+    } catch(err) { console.error(err); toast(err.message||"Photo action failed."); }
   });
   $("#account-button").addEventListener("click",()=>$("#account-dialog").showModal());
   $("#close-account").addEventListener("click",()=>$("#account-dialog").close());
@@ -402,42 +451,23 @@
     updateRoleTheme();
     if (!isConfigured()) { showAuth(); return; }
     try {
-      const {data,error} = await supabase.auth.getSession();
-      if (error) throw error;
-      const sessionUser = data.session?.user;
-      if (sessionUser) {
-        user = sessionUser;
-        let role = null;
-        try {
-          role = await checkMembership();
-        } catch (membershipError) {
-          await supabase.auth.signOut();
-          user = null;
-          throw membershipError;
-        }
-        if (role === "her" || role === "him") {
-          profileRole = role; selectedProfile = role;
-          updateRoleTheme();
-          await showApp();
-        } else {
-          await supabase.auth.signOut();
-          user = null; profileRole = null;
-          showAuth();
-          setAuthMessage("This account is not one of the two approved logins. Use the Alexia or Dyan account set up by the site owner.", true);
-        }
-      } else showAuth();
-    } catch (err) {
-      console.error(err);
-      showAuth();
-      setAuthMessage("Unable to verify your login. Check that Supabase and the two account assignments have been configured.", true);
-    }
-    supabase.auth.onAuthStateChange(async event => {
-      if (event === "SIGNED_OUT") {
-        if (realtimeChannel) { try { await supabase.removeChannel(realtimeChannel); } catch (_) {} realtimeChannel = null; }
-        user = null; profileRole = null; items = []; photos = [];
+      user=await account.get();
+      const role=profileForEmail(user.email);
+      if (role) {
+        profileRole=role; selectedProfile=role;
+        updateRoleTheme();
+        await showApp();
+      } else {
+        try { await account.deleteSession({sessionId:"current"}); } catch (_) {}
+        user=null; profileRole=null;
         showAuth();
+        setAuthMessage("This account isn't one of the two approved logins. Use Alexia or Dyan's account.",true);
       }
-    });
+    } catch(err) {
+      // A 401 means no current session; show the normal login form.
+      user=null; profileRole=null;
+      showAuth();
+    }
   }
   initialize();
 })();
