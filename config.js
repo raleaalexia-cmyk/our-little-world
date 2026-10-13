@@ -1,9 +1,11 @@
-// Public frontend configuration. Emails identify the two pre-created Supabase Auth users.
-// Never put either password or a service_role key in this file.
-// Login intentionally stays disabled until all four placeholders are replaced with your real project details.
+// Appwrite public project configuration.
+// These IDs are safe for frontend use. NEVER put an Appwrite API key or either password here.
 window.APP_CONFIG = {
-  supabaseUrl: "YOUR_SUPABASE_PROJECT_URL",
-  supabaseAnonKey: "YOUR_SUPABASE_PUBLISHABLE_OR_ANON_KEY",
-  alexiaEmail: "ralea.alexia@yahoo.com",
-  dyanEmail: "shawndyanp@gmail.com"
+  endpoint: "https://YOUR_REGION.cloud.appwrite.io/v1",
+  projectId: "YOUR_APPWRITE_PROJECT_ID",
+  databaseId: "YOUR_DATABASE_ID",
+  tableId: "YOUR_TABLE_ID",
+  bucketId: "YOUR_BUCKET_ID",
+  alexiaEmail: "ALEXIA_ACCOUNT_EMAIL",
+  dyanEmail: "DYAN_ACCOUNT_EMAIL"
 };
