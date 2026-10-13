@@ -102,12 +102,41 @@
     renderItems();
     updateRoleTheme();
   }
-  function login() {
-    // Login is intentionally frictionless: this screen is a profile picker, not security.
-    // Accept any password (or none) so the site can always be opened without backend setup.
-    currentProfile = selectedProfile;
-    $("#auth-message").textContent = "";
-    showApp();
+  const PASSWORD_HASHES = {
+    him: "0b8fd3adc6e343103d517e65e6edfdeb9e238743f2f867632aeaf81bda41ffd9",
+    her: "faafcaab1e38af3d4b32c4d22ff8168609a93c9d7e1acb3db1b14d1c1d5ea059"
+  };
+
+  async function login() {
+    const password = $("#auth-password").value;
+    const submit = $("#auth-submit");
+    const message = $("#auth-message");
+    if (!password) {
+      message.textContent = "Enter your password to continue.";
+      return;
+    }
+    submit.disabled = true;
+    message.textContent = "";
+    try {
+      const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(password));
+      const passwordHash = [...new Uint8Array(digest)]
+        .map(byte => byte.toString(16).padStart(2, "0"))
+        .join("");
+      if (passwordHash !== PASSWORD_HASHES[selectedProfile]) {
+        message.textContent = "That password is incorrect. Try again.";
+        $("#auth-password").value = "";
+        $("#auth-password").focus();
+        return;
+      }
+      currentProfile = selectedProfile;
+      $("#auth-password").value = "";
+      showApp();
+    } catch (_) {
+      message.textContent = "Password check failed. Refresh the page and try again.";
+      $("#auth-password").value = "";
+    } finally {
+      submit.disabled = false;
+    }
   }
   function logout() {
     currentProfile = null;
@@ -223,9 +252,6 @@
   $("#auth-form").addEventListener("submit", event => {
     event.preventDefault();
     login();
-  });
-  $("#auth-password").addEventListener("keydown", event => {
-    if (event.key === "Enter") login();
   });
   $("#signout-button").addEventListener("click", logout);
   $("#account-button").addEventListener("click", () => $("#account-dialog").showModal());
