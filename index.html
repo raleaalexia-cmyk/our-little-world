@@ -8,9 +8,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:wght@500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="styles.css?v=appwrite2">
-  <script src="https://cdn.jsdelivr.net/npm/appwrite@17.0.0"></script>
-  <script src="config.js?v=appwrite2"></script>
+  <link rel="stylesheet" href="styles.css?v=simple1">
 </head>
 <body>
   <div class="ambient ambient-one"></div><div class="ambient ambient-two"></div>
@@ -38,7 +36,7 @@
   <main id="app-screen" class="app-shell hidden">
     <header class="topbar">
       <a class="wordmark" href="#"><span class="mini-heart">♡</span> our little world</a>
-      <div class="top-actions"><span class="sync-status" id="sync-status">● Connected</span><button class="avatar" id="account-button" title="Account settings">♡</button></div>
+      <div class="top-actions"><span class="sync-status" id="sync-status">● Saved locally</span><button class="avatar" id="account-button" title="Account settings">♡</button></div>
     </header>
     <section class="hero">
       <div class="hero-copy"><p class="eyebrow">YOUR TWO-PERSON UNIVERSE</p><h1>Life is better<br><em>when it's us.</em></h1><p class="hero-sub">Little plans, big dreams, and all the in-between.</p><div class="hero-meta"><span class="date-dot"></span><span id="today-label">A new day, another memory to make</span><span class="greeting-divider">·</span><span id="user-greeting">Your little world</span></div></div>
@@ -60,17 +58,15 @@
       </div>
       <aside class="side-column">
         <section class="side-card date-card"><div class="side-card-top"><span class="side-kicker">A LITTLE REMINDER</span><span class="tiny-flower">✳</span></div><h3>One day, we'll<br><em>look back at this.</em></h3><p>Every big adventure starts with a tiny plan. Keep dreaming together.</p><div class="scribble-heart">♡</div></section>
-        <section class="side-card gallery-card"><div class="side-title"><div><span class="side-kicker">YOUR SHARED MEMORIES</span><h3>Photo album</h3></div><span class="note-icon">▧</span></div><p class="gallery-intro">Trips, little moments, and photos of you two. Shared across both accounts.</p><div class="gallery-controls"><select id="photo-folder" aria-label="Choose photo folder"><option value="Us">Us ♡</option><option value="Trips">Trips</option><option value="Date nights">Date nights</option><option value="Everyday">Everyday</option></select><button class="text-button" id="new-folder">＋ Folder</button></div><label class="upload-label" for="photo-upload">＋ Add photos<input id="photo-upload" type="file" accept="image/*" multiple hidden></label><p class="gallery-status" id="gallery-status">Photos are stored on this device in preview mode.</p><div id="photo-grid" class="photo-grid"></div></section>
-        <section class="side-card prompt-card"><span class="side-kicker">NEED AN IDEA?</span><h3>Today's tiny prompt</h3><p id="prompt-text">Make a playlist for a drive with nowhere in particular to go.</p><button id="new-prompt" class="text-button">Give us another ↻</button></section>
+          <section class="side-card prompt-card"><span class="side-kicker">NEED AN IDEA?</span><h3>Today's tiny prompt</h3><p id="prompt-text">Make a playlist for a drive with nowhere in particular to go.</p><button id="new-prompt" class="text-button">Give us another ↻</button></section>
         <button id="signout-button" class="signout">Log out <span>↗</span></button>
       </aside>
     </section>
     <footer class="footer">A SMALL CORNER OF THE INTERNET, JUST FOR YOU TWO <span>♡</span></footer>
   </main>
   <dialog id="add-dialog" class="modal"><form id="add-form" method="dialog"><div class="modal-head"><div><p class="eyebrow">A NEW LITTLE ADVENTURE</p><h2>Add to our list</h2></div><button type="button" class="close-button" id="close-add" aria-label="Close">×</button></div><label>What's the dream? <input id="item-title" maxlength="120" placeholder="e.g. Watch the sunrise together" required></label><label>A little more about it <textarea id="item-description" rows="2" maxlength="400" placeholder="Where, when, or why it matters (optional)"></textarea></label><div class="form-row"><label>Category<select id="item-category"><option value="date">Date idea</option><option value="travel">Place to go</option><option value="food">Food & drink</option><option value="adventure">Adventure</option><option value="little">Little thing</option></select></label><label>Priority<select id="item-priority"><option value="someday">Someday</option><option value="soon">Soon-ish</option><option value="must">Must do ♡</option></select></label></div><label>Dream date (optional)<input id="item-date" type="date"></label><button class="btn btn-primary full" type="submit">Add to our world <span>♡</span></button><p id="add-error" class="form-message"></p></form></dialog>
-  <dialog id="folder-dialog" class="modal small-modal"><form id="folder-form" method="dialog"><div class="modal-head"><div><p class="eyebrow">MAKE A LITTLE ALBUM</p><h2>New folder</h2></div><button type="button" class="close-button" id="close-folder">×</button></div><label>Folder name<input id="folder-name" maxlength="32" placeholder="e.g. Paris weekend" required></label><button class="btn btn-primary full" type="submit">Create folder</button></form></dialog>
-  <dialog id="account-dialog" class="modal small-modal"><div class="modal-head"><div><p class="eyebrow">YOUR SPACE</p><h2>Account</h2></div><button type="button" class="close-button" id="close-account">×</button></div><p class="muted" id="account-email"></p><p class="privacy-copy">Your account uses secure sign-in. Only the two registered couple accounts can access the shared bucket list and photo albums.</p><button class="btn btn-outline full" id="account-signout">Log out</button></dialog>
+  <dialog id="account-dialog" class="modal small-modal"><div class="modal-head"><div><p class="eyebrow">YOUR SPACE</p><h2>Account</h2></div><button type="button" class="close-button" id="close-account" aria-label="Close">×</button></div><p class="muted" id="account-email"></p><p class="privacy-copy">Your bucket list is saved in this browser.</p><button class="btn btn-outline full" id="account-signout">Log out</button></dialog>
   <div id="toast" class="toast" role="status" aria-live="polite"></div>
-  <script src="app.js?v=appwrite2"></script>
+  <script src="app.js?v=simple1"></script>
 </body>
 </html>
