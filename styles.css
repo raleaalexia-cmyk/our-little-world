@@ -72,3 +72,36 @@ body.theme-him .profile-pick[data-profile="him"].active{border-color:#66aaff}
 /* Login must remain visibly active and touchable while setup is incomplete. */
 #auth-submit{pointer-events:auto;cursor:pointer;opacity:1;position:relative;z-index:2}
 #auth-submit:disabled{pointer-events:auto;cursor:pointer;opacity:1}
+
+
+/* Clearly visible top-bar logout action, sized for phones and desktops. */
+.logout-top{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  gap:8px;
+  flex-shrink:0;
+  border:1px solid var(--line);
+  border-radius:9px;
+  padding:8px 12px;
+  background:#171c2b;
+  color:var(--ink);
+  font-size:11px;
+  font-weight:700;
+  line-height:1.2;
+  cursor:pointer;
+}
+.logout-top span{color:var(--rose);font-size:14px}
+.logout-top:hover{border-color:var(--rose);background:var(--rose-pale)}
+.top-actions{gap:12px}
+@media(max-width:680px){
+  .top-actions{gap:8px}
+  .logout-top{padding:8px 10px;font-size:10px}
+  .sync-status{display:none}
+}
+@media(max-width:380px){
+  .wordmark{font-size:11px}
+  .mini-heart{font-size:19px;margin-right:3px}
+  .logout-top{padding:7px 8px}
+  .avatar{width:31px;height:31px}
+}
