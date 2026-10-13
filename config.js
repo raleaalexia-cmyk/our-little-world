@@ -1,11 +1,12 @@
 // Appwrite public project configuration.
-// These IDs are safe for frontend use. NEVER put an Appwrite API key or either password here.
+// These IDs are public identifiers, not secrets. Never put passwords or an Appwrite API key here.
+// Use these exact resource IDs when creating the Appwrite database, table, and storage bucket.
 window.APP_CONFIG = {
   endpoint: "https://YOUR_REGION.cloud.appwrite.io/v1",
   projectId: "YOUR_APPWRITE_PROJECT_ID",
-  databaseId: "YOUR_DATABASE_ID",
-  tableId: "YOUR_TABLE_ID",
-  bucketId: "YOUR_BUCKET_ID",
-  alexiaEmail: "ALEXIA_ACCOUNT_EMAIL",
-  dyanEmail: "DYAN_ACCOUNT_EMAIL"
+  databaseId: "our-little-world-db",
+  tableId: "shared-content",
+  bucketId: "couple-photos",
+  alexiaEmail: "alexia@ourlittleworld.invalid",
+  dyanEmail: "dyan@ourlittleworld.invalid"
 };
