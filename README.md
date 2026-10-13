@@ -32,23 +32,11 @@ Copy the **User ID** shown for each account. You will use these IDs in the data 
 ### 3. Create one database and one table
 1. Open **Databases → Create database**. Set its ID to `our-little-world-db`.
 2. Create a table with ID `shared-content`.
-3. Add the columns below. Only `type` is required. Set all others to not required. Use Varchar/Text for text columns and Boolean for `completed`.
+3. Add only these **two columns**. Set both to required:
+   - `type` — Varchar, size 16
+   - `data` — Text
 
-| Column | Type | Size |
-| --- | --- | ---: |
-| `type` | Varchar, required | 16 |
-| `title` | Varchar | 120 |
-| `description` | Text | — |
-| `category` | Varchar | 24 |
-| `priority` | Varchar | 24 |
-| `dream_date` | Varchar | 20 |
-| `completed` | Boolean | — |
-| `completed_at` | Varchar | 40 |
-| `created_at` | Varchar | 40 |
-| `folder` | Varchar | 100 |
-| `name` | Varchar | 255 |
-| `storage_path` | Varchar | 36 |
-| `uploaded_by` | Varchar | 36 |
+The website stores each bucket-list item, folder, and photo record as JSON in `data`, so no additional database columns are needed.
 
 4. In the table's **Settings → Permissions**, grant **Read, Create, Update, and Delete** to the specific **User IDs** for Alexia and Dyan. Add each user's ID individually. Do not grant access to **Any**, **Guests**, or all **Users**.
 
