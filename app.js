@@ -126,13 +126,16 @@
         AppwriteSDK.Query.limit(500)
       ]
     });
-    items = (result.rows || []).map(row => ({...row,id:row.$id}));
+    items = (result.rows || []).map(row => {
+      let record = {};
+      try { record = JSON.parse(row.data || "{}"); } catch (_) {}
+      return {...record,id:row.$id};
+    });
     items.sort((a,b) => Number(!!a.completed)-Number(!!b.completed) ||
       String(a.created_at||"").localeCompare(String(b.created_at||"")));
   }
   async function saveItem(item) {
     const payload = {
-      type:"bucket",
       title:String(item.title||"").slice(0,120),
       description:String(item.description||"").slice(0,400),
       category:item.category||"little",
@@ -141,30 +144,27 @@
       completed:!!item.completed,
       completed_at:item.completed_at||"",
       created_at:item.created_at||new Date().toISOString(),
-      uploaded_by:user.$id,
-      folder:"",
-      name:"",
-      storage_path:""
+      uploaded_by:user.$id
     };
+    const rowData = {type:"bucket",data:JSON.stringify(payload)};
+    let row;
     if (item.id && !String(item.id).startsWith("demo-")) {
-      const {id, ...data} = payload;
-      const row = await tablesDB.updateRow({
-        databaseId:config.databaseId, tableId:config.tableId, rowId:item.id, data
+      row = await tablesDB.updateRow({
+        databaseId:config.databaseId,tableId:config.tableId,rowId:item.id,data:rowData
       });
-      return {...row,id:row.$id};
+    } else {
+      row = await tablesDB.createRow({
+        databaseId:config.databaseId,tableId:config.tableId,
+        rowId:AppwriteSDK.ID.unique(),data:rowData
+      });
     }
-    const row = await tablesDB.createRow({
-      databaseId:config.databaseId, tableId:config.tableId,
-      rowId:AppwriteSDK.ID.unique(), data:payload
-    });
-    return {...row,id:row.$id};
+    return {...payload,id:row.$id};
   }
   async function deleteItem(item) {
     await tablesDB.deleteRow({
-      databaseId:config.databaseId, tableId:config.tableId, rowId:item.id
+      databaseId:config.databaseId,tableId:config.tableId,rowId:item.id
     });
   }
-  let realtimeSubscription = null;
   async function connectRealtime() {
     if (!realtime || !profileRole) return;
     if (typeof realtimeSubscription === "function") {
@@ -271,10 +271,12 @@
   // Cloud photo album: private Storage bucket + metadata tables, shared by the two verified members.
   async function loadCloudFolders() {
     const result = await tablesDB.listRows({
-      databaseId:config.databaseId, tableId:config.tableId,
+      databaseId:config.databaseId,tableId:config.tableId,
       queries:[AppwriteSDK.Query.equal("type","folder"),AppwriteSDK.Query.limit(100)]
     });
-    const custom=(result.rows||[]).map(row=>String(row.name||"").trim()).filter(Boolean);
+    const custom=(result.rows||[]).map(row=>{
+      try { return String(JSON.parse(row.data||"{}").name||"").trim(); } catch (_) { return ""; }
+    }).filter(Boolean);
     photoFolders=[...defaultFolders,...custom.filter(n=>!defaultFolders.includes(n))];
     renderPhotoFolderOptions();
   }
@@ -286,15 +288,15 @@
   }
   async function loadCloudPhotos() {
     const result = await tablesDB.listRows({
-      databaseId:config.databaseId, tableId:config.tableId,
+      databaseId:config.databaseId,tableId:config.tableId,
       queries:[AppwriteSDK.Query.equal("type","photo"),AppwriteSDK.Query.limit(500)]
     });
     photos=await Promise.all((result.rows||[]).map(async row=>{
+      let p={};
+      try { p=JSON.parse(row.data||"{}"); } catch (_) {}
       let signedUrl=null;
-      try {
-        signedUrl=String(storage.getFileView({bucketId:config.bucketId,fileId:row.storage_path}));
-      } catch (_) {}
-      return {...row,id:row.$id,signedUrl};
+      try { signedUrl=String(storage.getFileView({bucketId:config.bucketId,fileId:p.storage_path})); } catch (_) {}
+      return {...p,id:row.$id,signedUrl};
     }));
     photos.sort((a,b)=>String(b.created_at||"").localeCompare(String(a.created_at||"")));
     renderPhotos();
@@ -321,7 +323,7 @@
     if (photoFolders.some(f=>f.toLowerCase()===trimmed.toLowerCase())) throw new Error("That folder already exists.");
     await tablesDB.createRow({
       databaseId:config.databaseId,tableId:config.tableId,rowId:AppwriteSDK.ID.unique(),
-      data:{type:"folder",name:trimmed,folder:trimmed,title:"",description:"",category:"",priority:"",dream_date:"",completed:false,completed_at:"",created_at:new Date().toISOString(),storage_path:"",uploaded_by:user.$id}
+      data:{type:"folder",data:JSON.stringify({name:trimmed,folder:trimmed,created_at:new Date().toISOString(),uploaded_by:user.$id})}
     });
     await loadCloudFolders(); photoFolder=trimmed; renderPhotos();
   }
@@ -332,7 +334,7 @@
     try {
       await tablesDB.createRow({
         databaseId:config.databaseId,tableId:config.tableId,rowId:AppwriteSDK.ID.unique(),
-        data:{type:"photo",name:file.name,folder:photoFolder,storage_path:fileResult.$id,uploaded_by:user.$id,created_at:new Date().toISOString(),title:"",description:"",category:"",priority:"",dream_date:"",completed:false,completed_at:""}
+        data:{type:"photo",data:JSON.stringify({name:file.name,folder:photoFolder,storage_path:fileResult.$id,uploaded_by:user.$id,created_at:new Date().toISOString()})}
       });
     } catch (err) {
       try { await storage.deleteFile({bucketId:config.bucketId,fileId:fileResult.$id}); } catch (_) {}
