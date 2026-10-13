@@ -1,25 +1,41 @@
 # Our Little World
 
-A phone-friendly couple's bucket list based on the items in the screenshots. Alexia gets pink accents and Dyan gets blue, on a dark background.
+A phone-friendly bucket-list website for Alexia and Dyan, with a dark design, pink accents for Alexia, and blue accents for Dyan.
 
-## Using the site
+**Website:** https://raleaalexia-cmyk.github.io/our-little-world/
+
+## Login
 
 1. Open the website.
-2. Choose Alexia or Dyan.
-3. Enter the password for the selected profile and tap **Log in**.
-4. Add, edit, complete, search, filter, or remove bucket-list dreams.
+2. Select **Alexia** or **Dyan**.
+3. Enter the password for that profile and select **Log in**.
+4. Use **Log out** in the top bar to return to profile selection.
 
-## Notes
+The password check runs in the browser. It is only a basic convenience gate, not secure authentication. Do not use this site to protect sensitive information.
 
-- The imported list has a new storage key so the old sample items are not kept. Changes save in that browser on that device.
-- It does not sync between different phones or browsers.
-- The prior sample list has been replaced with the screenshot list, including seven checked items marked completed.
-- Items are labeled **Place** or **Thing to do**, with a matching filter.
-- Completed dreams stay at the bottom.
-- Photo uploads, photo albums, notes, Appwrite, and account setup are not included.
-- The password check is a front-end convenience only; do not use this site to protect sensitive information.
-- The design adapts to phones and desktops, with pink Alexia and blue Dyan themes.
+## Bucket list
 
-## Website
+The current list was transcribed from the couple's screenshots and contains **31 entries**:
+- **24 not completed** and **7 marked completed**.
+- Each entry is labeled **Place** or **Thing to do**.
+- Filter the list by type, category, completion status, or search text.
+- Add new dreams, edit existing ones, mark them done, or delete them.
+- Completed entries stay at the bottom of the list.
+- A progress summary shows remaining dreams, completed dreams, and overall progress.
 
-https://raleaalexia-cmyk.github.io/our-little-world/
+When adding or editing a dream, choose whether it is a place or a thing to do, and select its category and priority.
+
+## Saving and limitations
+
+- Changes save in the browser's local storage on the current device and browser.
+- The list does **not** sync automatically between phones, computers, or different browsers.
+- Clearing the browser's site data can remove the locally saved list.
+- Photo uploads, photo albums, shared cloud storage, notes, and Appwrite setup are not included.
+- The interface is responsive for phones, tablets, and desktops.
+
+## Project files
+
+- `index.html` — page structure and login screen.
+- `styles.css` — visual design and responsive layout.
+- `app.js` — password check, bucket-list interactions, and browser-local saving.
+
