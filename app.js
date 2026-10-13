@@ -2,7 +2,7 @@
   "use strict";
   const $ = (selector) => document.querySelector(selector);
   const $$ = (selector) => [...document.querySelectorAll(selector)];
-  const STORAGE_KEY = "our-little-world.bucket-list.v1";
+  const STORAGE_KEY = "our-little-world.bucket-list.v2";
   const categoryNames = {date:"Date idea",travel:"Place to go",food:"Food & drink",adventure:"Adventure",little:"Little thing"};
   const prompts = [
     "Make a playlist for a drive with nowhere in particular to go.",
@@ -15,13 +15,46 @@
     "Go for a walk and take turns choosing every next turn."
   ];
   const starterItems = [
-    {title:"Watch the sunrise together",description:"Bring something warm to drink and take your time.",category:"date",priority:"must"},
-    {title:"Take a weekend trip somewhere new",description:"Pick a place neither of us has been before.",category:"travel",priority:"soon"},
-    {title:"Cook a three-course dinner together",description:"Choose the menu and make it a little event.",category:"food",priority:"someday"},
-    {title:"Have a no-phone date night",description:"Just us, good conversation, and no scrolling.",category:"date",priority:"soon"},
-    {title:"Go on a spontaneous road trip",description:"Make a playlist and decide the route as we go.",category:"adventure",priority:"someday"},
-    {title:"Write letters to our future selves",description:"Open them a year from now.",category:"little",priority:"someday"}
-  ].map((item, index) => ({...item,id:"starter-"+(index+1),completed:false,created_at:new Date(Date.now()+index).toISOString(),dream_date:""}));
+    {title:"kletter park",category:"adventure",priority:"someday"},
+    {title:"streichel zoo Deutschland",category:"travel",priority:"someday"},
+    {title:"lapland",category:"travel",priority:"someday"},
+    {title:"hormoz rout sand iran",category:"travel",priority:"someday"},
+    {title:"tauchen",category:"adventure",priority:"someday"},
+    {title:"feschen",category:"adventure",priority:"someday"},
+    {title:"stausei",category:"travel",priority:"someday"},
+    {title:"camping",category:"adventure",priority:"someday"},
+    {title:"klotteren besch",category:"adventure",priority:"someday"},
+    {title:"wanderen",category:"adventure",priority:"someday"},
+    {title:"töpferen",category:"little",priority:"someday"},
+    {title:"spielabend",category:"date",priority:"someday"},
+    {title:"Rageroom",category:"adventure",priority:"someday"},
+    {title:"schwemm calypso",category:"adventure",priority:"someday"},
+    {title:"brasillieneschen volleyball",category:"adventure",priority:"someday"},
+    {title:"yoga",category:"adventure",priority:"someday"},
+    {title:"super mario nintendo japan",category:"adventure",priority:"someday"},
+    {title:"nordkapp",category:"travel",priority:"someday"},
+    {title:"paddel",category:"adventure",priority:"someday"},
+    {title:"lodalen",category:"travel",priority:"someday"},
+    {title:"nuuk greenland",category:"travel",priority:"someday"},
+    {title:"Mount Fuji",category:"travel",priority:"someday"},
+    {title:"restaurant meeres früchten iessen",category:"food",priority:"someday"},
+    {title:"picknick",category:"date",priority:"someday"},
+    {title:"volleyball spillen",category:"adventure",priority:"someday",completed:true},
+    {title:"mottorat fueren zesummen",category:"adventure",priority:"someday",completed:true},
+    {title:"sauna",category:"date",priority:"someday",completed:true},
+    {title:"molen owend",category:"date",priority:"someday",completed:true},
+    {title:"Bowl painting",category:"date",priority:"someday",completed:true},
+    {title:"Deirepark esch",category:"travel",priority:"someday",completed:true},
+    {title:"ramen gelle fra",category:"food",priority:"someday",completed:true}
+  ].map((item, index) => ({
+    ...item,
+    id:"screenshot-"+(index+1),
+    description:"",
+    dream_date:"",
+    completed:!!item.completed,
+    completed_at:item.completed ? new Date(Date.now()+index).toISOString() : "",
+    created_at:new Date(Date.now()+index).toISOString()
+  }));
 
   let selectedProfile = "her";
   let currentProfile = null;
@@ -39,7 +72,9 @@
         if (Array.isArray(parsed)) return parsed;
       }
     } catch (_) {}
-    return starterItems.map(item => ({...item}));
+    const initialItems = starterItems.map(item => ({...item}));
+    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(initialItems)); } catch (_) {}
+    return initialItems;
   }
   function saveItems() {
     try {
