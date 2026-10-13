@@ -8,9 +8,9 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:wght@500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="styles.css?v=20261013d">
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="config.js?v=20261013d"></script>
+  <link rel="stylesheet" href="styles.css?v=appwrite1">
+  <script src="https://cdn.jsdelivr.net/npm/appwrite@17.0.0"></script>
+  <script src="config.js?v=appwrite1"></script>
 </head>
 <body>
   <div class="ambient ambient-one"></div><div class="ambient ambient-two"></div>
@@ -30,7 +30,7 @@
         <button class="btn btn-primary full" id="auth-submit" type="submit">Log in as Alexia <span>↗</span></button>
       </form>
       <p id="auth-message" class="form-message" aria-live="polite"></p>
-      <p id="configuration-warning" class="config-warning hidden">Login is currently disabled because the Supabase connection and account mapping are still blank. This is a setup issue, not a password error. Connect the project and the two existing accounts using the <a href="https://github.com/raleaalexia-cmyk/our-little-world#required-private-setup" target="_blank" rel="noopener">setup guide ↗</a>.</p>
+      <p id="configuration-warning" class="config-warning hidden">The private login needs a one-time Appwrite connection. Follow the simple setup guide, then sign in as Alexia or Dyan.</p>
       <p class="tiny-note">Private login for Alexia and Dyan only.</p>
     </section>
     <p class="auth-foot">MADE FOR YOUR NEXT CHAPTER <span>✳</span></p>
@@ -71,6 +71,6 @@
   <dialog id="folder-dialog" class="modal small-modal"><form id="folder-form" method="dialog"><div class="modal-head"><div><p class="eyebrow">MAKE A LITTLE ALBUM</p><h2>New folder</h2></div><button type="button" class="close-button" id="close-folder">×</button></div><label>Folder name<input id="folder-name" maxlength="32" placeholder="e.g. Paris weekend" required></label><button class="btn btn-primary full" type="submit">Create folder</button></form></dialog>
   <dialog id="account-dialog" class="modal small-modal"><div class="modal-head"><div><p class="eyebrow">YOUR SPACE</p><h2>Account</h2></div><button type="button" class="close-button" id="close-account">×</button></div><p class="muted" id="account-email"></p><p class="privacy-copy">Your account uses secure sign-in. Only the two registered couple accounts can access the shared bucket list and photo albums.</p><button class="btn btn-outline full" id="account-signout">Log out</button></dialog>
   <div id="toast" class="toast" role="status" aria-live="polite"></div>
-  <script src="app.js?v=20261013d"></script>
+  <script src="app.js?v=appwrite1"></script>
 </body>
 </html>
