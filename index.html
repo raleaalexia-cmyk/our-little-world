@@ -8,7 +8,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:wght@500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="styles.css?v=simple3-20261013">
+  <link rel="stylesheet" href="styles.css?v=logout-top-20261013">
 </head>
 <body>
   <div class="ambient ambient-one"></div><div class="ambient ambient-two"></div>
@@ -35,7 +35,7 @@
   <main id="app-screen" class="app-shell hidden">
     <header class="topbar">
       <a class="wordmark" href="#"><span class="mini-heart">♡</span> our little world</a>
-      <div class="top-actions"><span class="sync-status" id="sync-status">● Saved locally</span><button class="avatar" id="account-button" title="Account settings">♡</button></div>
+      <div class="top-actions"><span class="sync-status" id="sync-status">● Saved locally</span><button id="signout-button" class="logout-top" type="button">Log out <span aria-hidden="true">↗</span></button><button class="avatar" id="account-button" type="button" title="Account settings" aria-label="Account settings">♡</button></div>
     </header>
     <section class="hero">
       <div class="hero-copy"><p class="eyebrow">YOUR TWO-PERSON UNIVERSE</p><h1>Life is better<br><em>when it's us.</em></h1><p class="hero-sub">Little plans, big dreams, and all the in-between.</p><div class="hero-meta"><span class="date-dot"></span><span id="today-label">A new day, another memory to make</span><span class="greeting-divider">·</span><span id="user-greeting">Your little world</span></div></div>
@@ -58,7 +58,6 @@
       <aside class="side-column">
         <section class="side-card date-card"><div class="side-card-top"><span class="side-kicker">A LITTLE REMINDER</span><span class="tiny-flower">✳</span></div><h3>One day, we'll<br><em>look back at this.</em></h3><p>Every big adventure starts with a tiny plan. Keep dreaming together.</p><div class="scribble-heart">♡</div></section>
           <section class="side-card prompt-card"><span class="side-kicker">NEED AN IDEA?</span><h3>Today's tiny prompt</h3><p id="prompt-text">Make a playlist for a drive with nowhere in particular to go.</p><button id="new-prompt" class="text-button">Give us another ↻</button></section>
-        <button id="signout-button" class="signout">Log out <span>↗</span></button>
       </aside>
     </section>
     <footer class="footer">A SMALL CORNER OF THE INTERNET, JUST FOR YOU TWO <span>♡</span></footer>
