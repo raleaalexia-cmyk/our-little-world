@@ -103,12 +103,8 @@
     updateRoleTheme();
   }
   function login() {
-    const password = $("#auth-password").value.trim();
-    if (!password) {
-      $("#auth-message").textContent = "Enter your passcode to continue.";
-      return;
-    }
-    // This is intentionally a simple front-end gate. It does not verify the passcode.
+    // Login is intentionally frictionless: this screen is a profile picker, not security.
+    // Accept any password (or none) so the site can always be opened without backend setup.
     currentProfile = selectedProfile;
     $("#auth-message").textContent = "";
     showApp();
