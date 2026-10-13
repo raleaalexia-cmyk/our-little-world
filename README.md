@@ -3,9 +3,13 @@
 A phone-friendly shared couple's bucket list and photo album. Alexia gets pink accents and Dyan gets blue, on a black background.
 
 ## Login
-Choose Alexia or Dyan and enter that profile's password. There is no public account-creation screen. The app uses Appwrite email/password authentication. The exact two configured email accounts must also be members of the private Appwrite team that has access to the database table and photo bucket.
+Choose Alexia or Dyan and enter that profile's password. There is no account-creation screen on the website. Login uses Appwrite email/password authentication with two internal alias emails:
+- Alexia: `alexia@ourlittleworld.invalid`
+- Dyan: `dyan@ourlittleworld.invalid`
 
-The website source never contains either password or an Appwrite API key.
+These are intentionally non-deliverable alias addresses; they do not expose personal email addresses. Password reset emails will not reach these aliases, so reset a forgotten password directly in Appwrite Console.
+
+The public website source never contains either password or an Appwrite API key.
 
 ## One-time setup (Appwrite; no SQL)
 
@@ -14,25 +18,21 @@ The website source never contains either password or an Appwrite API key.
 2. In **Overview / Project Settings**, copy the Project ID and the API endpoint/region.
 3. Under **Settings → Platforms**, add a **Web** platform with hostname `raleaalexia-cmyk.github.io`.
 
-Appwrite Free currently includes a small project's database, storage, and bandwidth allowance. Free projects may pause after a week without activity; check Appwrite's current limits if you need uninterrupted availability.
+Appwrite's current Free plan includes 2 GB of storage and 5 GB of bandwidth, with usage limits. Free projects may pause after a week without activity. See [Appwrite pricing](https://appwrite.io/pricing) for current limits.
 
-### 2. Create the two users privately
-1. In **Auth → Users**, create Alexia's user with her email and a new strong password.
-2. Create Dyan's user with his email and a different new strong password.
-3. The passwords previously typed into chat should be treated as exposed; choose new ones privately.
-4. Never put passwords in GitHub or in `config.js`.
+### 2. Privately create the two login users
+In **Auth → Users**, create these two users manually (do not use the public website):
+- Name: `Alexia`; Email: `alexia@ourlittleworld.invalid`; Password: choose a new strong password privately.
+- Name: `Dyan`; Email: `dyan@ourlittleworld.invalid`; Password: choose a different new strong password privately.
 
-The public website has no sign-up UI. Access to shared data is restricted to Appwrite team members; accounts outside that team must not be given database or bucket permissions.
+The passwords previously typed into chat should be treated as exposed; use new passwords. These alias emails intentionally cannot receive email. Email verification is not required for signing in with these accounts; reset forgotten passwords in Appwrite Console.
 
-### 3. Create a private team
-1. Open **Teams** and create a team named `our-little-world`.
-2. Add the Alexia and Dyan Auth users as team members.
-3. Keep other users out of this team. Copy the Team ID for reference.
+Copy the **User ID** shown for each account. You will use these IDs in the data permissions.
 
-### 4. Create one database and one table
-1. Open **Databases → Create database**. Name it `our-little-world`; copy its ID.
-2. Create a table named `shared_content`; copy its ID.
-3. Add these columns. Except for `type`, set each column to **not required**. Use varchar/text for the text columns and boolean for `completed`.
+### 3. Create one database and one table
+1. Open **Databases → Create database**. Set its ID to `our-little-world-db`.
+2. Create a table with ID `shared-content`.
+3. Add the columns below. Only `type` is required. Set all others to not required. Use Varchar/Text for text columns and Boolean for `completed`.
 
 | Column | Type | Size |
 | --- | --- | ---: |
@@ -50,36 +50,30 @@ The public website has no sign-up UI. Access to shared data is restricted to App
 | `storage_path` | Varchar | 36 |
 | `uploaded_by` | Varchar | 36 |
 
-4. In the table's **Settings → Permissions**, grant the `our-little-world` **team** Read, Create, Update, and Delete access. Do not grant those permissions to `Any` or `Users`.
+4. In the table's **Settings → Permissions**, grant **Read, Create, Update, and Delete** to the specific **User IDs** for Alexia and Dyan. Add each user's ID individually. Do not grant access to **Any**, **Guests**, or all **Users**.
 
-### 5. Create the private photo bucket
-1. Open **Storage → Create bucket**, name it `couple-photos`, and copy the Bucket ID.
-2. In the bucket's **Settings → Permissions**, grant the same team Read, Create, Update, and Delete access.
-3. Do not grant access to `Any` or all authenticated users. If file security is enabled, the team permission must also apply to the uploaded files.
+### 4. Create the private photo bucket
+1. Open **Storage → Create bucket**. Set its ID to `couple-photos`.
+2. In **Bucket Settings → Permissions**, grant **Read, Create, Update, and Delete** only to the same two specific User IDs.
+3. Do not grant access to **Any**, **Guests**, or all **Users**. If file-level security is enabled, configure the same two user permissions for uploaded files.
 
-### 6. Connect the website
-Open [`config.js` on GitHub](https://github.com/raleaalexia-cmyk/our-little-world/edit/main/config.js) and replace these placeholders:
+### 5. Connect the website
+Open [`config.js` on GitHub](https://github.com/raleaalexia-cmyk/our-little-world/edit/main/config.js) and replace just these two placeholders:
+- `YOUR_REGION`: use the region/API endpoint displayed in Appwrite. For example, if the endpoint shown is `https://fra.cloud.appwrite.io/v1`, set the entire `endpoint` value to that exact URL.
+- `YOUR_APPWRITE_PROJECT_ID`: your project's Project ID.
 
-- `YOUR_REGION`: your Appwrite region from the project's API endpoint. Keep the `.cloud.appwrite.io/v1` ending (for example, if your endpoint is `https://fra.cloud.appwrite.io/v1`, replace the whole endpoint value with that exact URL).
-- `YOUR_APPWRITE_PROJECT_ID`: Project ID
-- `YOUR_DATABASE_ID`: database ID
-- `YOUR_TABLE_ID`: `shared_content` table ID
-- `YOUR_BUCKET_ID`: `couple-photos` bucket ID
-- `ALEXIA_ACCOUNT_EMAIL`: exact email used for Alexia's Auth user
-- `DYAN_ACCOUNT_EMAIL`: exact email used for Dyan's Auth user
+The database ID, table ID, bucket ID, and the two alias emails are already filled in. Do not add any password or API key. Click **Commit changes**.
 
-Click **Commit changes**. These IDs and email mappings are frontend configuration; do not add passwords or an Appwrite API key.
-
-GitHub Pages will redeploy the site after the commit. Use the app at https://raleaalexia-cmyk.github.io/our-little-world/.
+GitHub Pages will redeploy after the commit. Open https://raleaalexia-cmyk.github.io/our-little-world/, select Alexia or Dyan, and enter the password assigned to that account in Appwrite.
 
 ## Features
 - One list shared between both accounts, including categories, priorities, search, and progress.
 - Completed dreams remain at the bottom.
-- Shared photo folders, upload, download, and delete.
+- Shared photo folders, uploads, downloads, and deletion.
 - Realtime list and photo updates between devices.
-- Responsive design for phone, tablet, and desktop.
+- Responsive phone, tablet, and desktop design.
 - Pink Alexia theme and blue Dyan theme.
 - Notes section removed.
 
 ## Security
-The frontend checks which of the two configured profiles signed in, but the real data protection is enforced by Appwrite permissions. Only the team members should have access to the table and bucket. Never make the table or bucket public. Never put passwords or an Appwrite API key in frontend files or GitHub.
+Access is enforced by Appwrite's table and bucket permissions, not only by the frontend login screen. The two user IDs must be the only users granted access to the shared table and photo bucket. Never make either resource public. Never put passwords or an Appwrite API key in frontend files or GitHub.
