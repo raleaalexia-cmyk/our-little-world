@@ -53,7 +53,7 @@
     $("#auth-screen").classList.remove("hidden");
     $("#app-screen").classList.add("hidden");
     $("#configuration-warning").classList.toggle("hidden", isConfigured());
-    $("#auth-submit").disabled = !isConfigured();
+    $("#auth-submit").disabled = false;
     if (!isConfigured()) setAuthMessage("Secure login is not connected. Add the Supabase URL, public key, and both account emails in config.js.", true);
     else setAuthMessage("");
     updateRoleTheme();
@@ -323,7 +323,7 @@
       $("#auth-password").value = "";
       $("#auth-password").focus();
     } finally {
-      $("#auth-submit").disabled = !isConfigured();
+      $("#auth-submit").disabled = false;
     }
   });
   function openAdd() {
