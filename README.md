@@ -1,6 +1,6 @@
 # Our Little World
 
-A phone-friendly couple's bucket list. Alexia gets pink accents and Dyan gets blue, on a dark background.
+A phone-friendly couple's bucket list based on the items in the screenshots. Alexia gets pink accents and Dyan gets blue, on a dark background.
 
 ## Using the site
 
@@ -11,8 +11,10 @@ A phone-friendly couple's bucket list. Alexia gets pink accents and Dyan gets bl
 
 ## Notes
 
-- The list is saved in the browser's local storage on that device.
+- The imported list has a new storage key so the old sample items are not kept. Changes save in that browser on that device.
 - It does not sync between different phones or browsers.
+- The prior sample list has been replaced with the screenshot list, including seven checked items marked completed.
+- Items are labeled **Place** or **Thing to do**, with a matching filter.
 - Completed dreams stay at the bottom.
 - Photo uploads, photo albums, notes, Appwrite, and account setup are not included.
 - The password check is a front-end convenience only; do not use this site to protect sensitive information.
